@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from './page.module.css';
+import styles from '../../page.module.css';
 
 export default function StudentLogin() {
   const [username, setUsername] = useState('');
@@ -42,34 +42,11 @@ export default function StudentLogin() {
   };
 
   return (
-    <main className={styles.main} style={{ position: 'relative' }}>
-      {/* Admin Button Corner */}
-      <button 
-        onClick={() => router.push('/admin/login')} 
-        style={{ 
-          position: 'absolute', 
-          top: '20px', 
-          right: '20px', 
-          background: 'rgba(16, 185, 129, 0.1)', 
-          border: '1px solid rgba(16, 185, 129, 0.3)', 
-          color: '#10b981', 
-          padding: '8px 16px', 
-          borderRadius: '8px', 
-          cursor: 'pointer',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          transition: 'all 0.2s'
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; }}
-      >
-        Admin Login
-      </button>
-
+    <main className={styles.main}>
       <div className={`glass-panel ${styles.loginCard}`}>
         <div className={styles.header}>
-          <div className={styles.logo}>&lt;/&gt;</div>
-          <h1>Student Login</h1>
+          <div className={styles.logo}>🎓</div>
+          <h1>Student Portal</h1>
           <p>Login to take your tests</p>
         </div>
 

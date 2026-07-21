@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from './page.module.css';
+import styles from '../../page.module.css';
 
-export default function StudentLogin() {
+export default function AdminLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,11 +29,11 @@ export default function StudentLogin() {
         throw new Error(data.error || 'Login failed');
       }
 
-      if (data.user.role === 'admin') {
-        throw new Error('Admins must log in through the admin portal');
+      if (data.user.role !== 'admin') {
+        throw new Error('Access Denied. You are not an administrator.');
       }
 
-      router.push('/student');
+      router.push('/admin');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -42,35 +42,12 @@ export default function StudentLogin() {
   };
 
   return (
-    <main className={styles.main} style={{ position: 'relative' }}>
-      {/* Admin Button Corner */}
-      <button 
-        onClick={() => router.push('/admin/login')} 
-        style={{ 
-          position: 'absolute', 
-          top: '20px', 
-          right: '20px', 
-          background: 'rgba(16, 185, 129, 0.1)', 
-          border: '1px solid rgba(16, 185, 129, 0.3)', 
-          color: '#10b981', 
-          padding: '8px 16px', 
-          borderRadius: '8px', 
-          cursor: 'pointer',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          transition: 'all 0.2s'
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; }}
-      >
-        Admin Login
-      </button>
-
+    <main className={styles.main}>
       <div className={`glass-panel ${styles.loginCard}`}>
         <div className={styles.header}>
-          <div className={styles.logo}>&lt;/&gt;</div>
-          <h1>Student Login</h1>
-          <p>Login to take your tests</p>
+          <div className={styles.logo} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>🛡️</div>
+          <h1>Admin Portal</h1>
+          <p>Login to manage tests</p>
         </div>
 
         {error && <div className={styles.error}>{error}</div>}
@@ -85,7 +62,7 @@ export default function StudentLogin() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              placeholder="e.g. john_doe"
+              placeholder="e.g. admin_user"
             />
           </div>
 
@@ -102,12 +79,12 @@ export default function StudentLogin() {
             />
           </div>
 
-          <button type="submit" className={`btn-primary ${styles.submitBtn}`} disabled={loading}>
+          <button type="submit" className={`btn-primary ${styles.submitBtn}`} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }} disabled={loading}>
             {loading ? 'Authenticating...' : 'Sign In'}
           </button>
         </form>
         <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: '#94a3b8' }}>
-          Don't have an account? <a href="/student/register" style={{ color: 'var(--primary-color)' }}>Register here</a>
+          Don't have an admin account? <a href="/admin/register" style={{ color: '#10b981' }}>Register here</a>
         </p>
       </div>
     </main>
