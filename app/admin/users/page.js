@@ -86,10 +86,10 @@ export default function ManageUsers() {
         <div className="glass-panel" style={{ padding: '24px' }}>
           <h3>Student List</h3>
           {loading ? <p style={{ marginTop: '20px' }}>Loading...</p> : (
-            <div style={{ marginTop: '20px' }}>
+            <div style={{ marginTop: '20px', maxHeight: '70vh', overflowY: 'auto', paddingRight: '8px' }}>
               {users.length === 0 ? <p style={{ color: '#94a3b8' }}>No students found.</p> : (
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
+                  <thead style={{ position: 'sticky', top: 0, background: 'var(--card-bg, #1e293b)', zIndex: 10 }}>
                     <tr style={{ borderBottom: '1px solid var(--card-border)', textAlign: 'left' }}>
                       <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Name</th>
                       <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Student ID</th>

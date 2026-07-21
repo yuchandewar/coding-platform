@@ -36,6 +36,36 @@ export default function LeaderboardPage() {
     return `${m}m ${s}s`;
   };
 
+  const handleDownloadCSV = () => {
+    if (!data || !data.leaderboard || data.leaderboard.length === 0) return;
+    
+    const headers = ['Rank', 'Student Name', 'Username', 'Score', 'Time Taken', 'Tab Switches', 'Submitted On'];
+    const csvRows = [headers.join(',')];
+    
+    data.leaderboard.forEach(sub => {
+      const row = [
+        sub.rank,
+        `"${sub.studentName || ''}"`,
+        `"${sub.studentUsername || ''}"`,
+        sub.score?.toFixed(2) || 0,
+        formatTime(sub.timeTaken),
+        sub.tabSwitches || 0,
+        `"${new Date(sub.createdAt).toLocaleString()}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${data.testTitle?.replace(/[^a-zA-Z0-9]/g, '_')}_leaderboard.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div>
       <div className={styles.pageHeader}>
@@ -43,6 +73,14 @@ export default function LeaderboardPage() {
           <button onClick={() => router.push(`/admin/tests/${id}`)} className="btn-primary" style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.1)', color: 'white' }}>← Back to Test</button>
           <h1>Leaderboard: {data?.testTitle || 'Loading...'}</h1>
         </div>
+        <button 
+          onClick={handleDownloadCSV} 
+          disabled={!data || data.leaderboard.length === 0}
+          className="btn-primary"
+          style={{ padding: '8px 16px', background: 'var(--success-color)', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <span>📥 Download CSV</span>
+        </button>
       </div>
 
       <div className="glass-panel" style={{ padding: '24px' }}>

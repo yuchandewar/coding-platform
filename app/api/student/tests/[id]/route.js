@@ -31,11 +31,44 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: 'Test has expired' }, { status: 403 });
     }
 
+    const Submission = (await import('@/models/Submission')).default;
+
     if (!test.allowMultipleSubmissions) {
-      const Submission = (await import('@/models/Submission')).default;
-      const existingSubmission = await Submission.findOne({ testId: id, studentId: user.userId });
+      const existingSubmission = await Submission.findOne({ testId: id, studentId: user.userId, status: { $in: ['submitted', 'graded'] } });
       if (existingSubmission) {
         return NextResponse.json({ error: 'You have already submitted this exam.' }, { status: 403 });
+      }
+    }
+
+    let serverTimeLeft = test.timerMinutes * 60; // in seconds
+    let sessionSubmissionId = null;
+    let initialTabSwitches = 0;
+
+    if (test.strictTimer) {
+      let inProgressSubmission = await Submission.findOne({ testId: id, studentId: user.userId, status: 'in_progress' });
+      
+      if (inProgressSubmission) {
+        const timeElapsedSeconds = Math.floor((now.getTime() - new Date(inProgressSubmission.createdAt).getTime()) / 1000);
+        serverTimeLeft = (test.timerMinutes * 60) - timeElapsedSeconds;
+        sessionSubmissionId = inProgressSubmission._id;
+        initialTabSwitches = inProgressSubmission.tabSwitches || 0;
+
+        if (serverTimeLeft <= 0) {
+          // Auto submit them if time has passed
+          inProgressSubmission.status = 'submitted';
+          await inProgressSubmission.save();
+          return NextResponse.json({ error: 'Time limit exceeded. Your test has been auto-submitted.' }, { status: 403 });
+        }
+      } else {
+        // Create new session
+        const newSession = await Submission.create({
+          testId: id,
+          studentId: user.userId,
+          status: 'in_progress',
+          answers: [],
+          tabSwitches: 0,
+        });
+        sessionSubmissionId = newSession._id;
       }
     }
 
@@ -52,6 +85,10 @@ export async function GET(req, { params }) {
         });
       }
     });
+
+    sanitizedTest.serverTimeLeft = serverTimeLeft;
+    sanitizedTest.sessionSubmissionId = sessionSubmissionId;
+    sanitizedTest.initialTabSwitches = initialTabSwitches;
 
     return NextResponse.json(sanitizedTest);
   } catch (error) {

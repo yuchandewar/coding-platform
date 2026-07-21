@@ -53,8 +53,8 @@ const SubmissionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['submitted', 'graded'],
-    default: 'submitted',
+    enum: ['in_progress', 'submitted', 'graded'],
+    default: 'in_progress',
   },
   timeTaken: {
     type: Number, // Time taken in seconds

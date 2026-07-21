@@ -90,6 +90,10 @@ const TestSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  strictTimer: {
+    type: Boolean,
+    default: false,
+  },
   organizationName: {
     type: String,
     default: 'Coding Exam Platform',

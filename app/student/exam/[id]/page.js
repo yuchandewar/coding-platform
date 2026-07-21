@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Editor from '@monaco-editor/react';
 
@@ -34,6 +34,21 @@ export default function ExamPage() {
   // Anti-Cheating
   const [tabSwitches, setTabSwitches] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const sessionSubmissionIdRef = useRef(null);
+
+  const syncWarning = async (newCount) => {
+    if (sessionSubmissionIdRef.current) {
+      try {
+        await fetch(`/api/student/submissions/${sessionSubmissionIdRef.current}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tabSwitches: newCount })
+        });
+      } catch (err) {
+        console.error('Failed to sync warning', err);
+      }
+    }
+  };
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -41,6 +56,19 @@ export default function ExamPage() {
         setTabSwitches(prev => {
           const newCount = prev + 1;
           setWarningMessage(`Warning: You have left the exam window! This has been recorded. (Warning ${newCount})`);
+          syncWarning(newCount);
+          return newCount;
+        });
+      }
+    };
+
+    // Catch OS-level interrupts (Windows key, Alt-Tab, clicking another monitor)
+    const handleWindowBlur = () => {
+      if (isFullscreen) {
+        setTabSwitches(prev => {
+          const newCount = prev + 1;
+          setWarningMessage(`Warning: Exam window lost focus! (Windows Key / Alt-Tab detected). This has been recorded. (Warning ${newCount})`);
+          syncWarning(newCount);
           return newCount;
         });
       }
@@ -52,6 +80,7 @@ export default function ExamPage() {
         setTabSwitches(prev => {
           const newCount = prev + 1;
           setWarningMessage(`Warning: You exited fullscreen mode! This has been recorded. (Warning ${newCount})`);
+          syncWarning(newCount);
           return newCount;
         });
       } else {
@@ -59,12 +88,49 @@ export default function ExamPage() {
       }
     };
 
+    // Block right-click context menu
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      setNotification({ type: 'warning', message: 'Right-click is disabled during the exam.' });
+      setTimeout(() => setNotification(null), 3000);
+    };
+
+    // Block specific keyboard shortcuts
+    const handleKeyDown = (e) => {
+      // Prevent F1-F12
+      if (e.key.startsWith('F') && !isNaN(e.key.slice(1))) {
+        e.preventDefault();
+        setNotification({ type: 'warning', message: 'Function keys are disabled.' });
+        setTimeout(() => setNotification(null), 3000);
+      }
+      
+      // Prevent Ctrl, Alt, Meta (Windows/Cmd) combinations
+      if (e.ctrlKey || e.altKey || e.metaKey) {
+        e.preventDefault();
+        setNotification({ type: 'warning', message: 'Keyboard shortcuts (Ctrl/Alt/Win) are disabled.' });
+        setTimeout(() => setNotification(null), 3000);
+      }
+    };
+
+    // Prevent dragging text/images
+    const handleDragStart = (e) => {
+      e.preventDefault();
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('dragstart', handleDragStart);
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('dragstart', handleDragStart);
     };
   }, [isFullscreen]);
 
@@ -122,7 +188,13 @@ export default function ExamPage() {
       }
 
       setTest(data);
-      setTimeLeft(data.timerMinutes * 60);
+      if (data.sessionSubmissionId) {
+        sessionSubmissionIdRef.current = data.sessionSubmissionId;
+      }
+      if (data.initialTabSwitches) {
+        setTabSwitches(data.initialTabSwitches);
+      }
+      setTimeLeft(data.serverTimeLeft !== undefined ? data.serverTimeLeft : data.timerMinutes * 60);
       
       // Initialize answers and statuses
       const initialAnswers = {};
@@ -375,7 +447,7 @@ export default function ExamPage() {
   if (!test) return <div style={{ padding: '40px', textAlign: 'center' }}>Test not found</div>;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0f172a', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0f172a', position: 'relative', userSelect: 'none', WebkitUserSelect: 'none' }}>
       
       {/* Toast Notification */}
       {notification && (

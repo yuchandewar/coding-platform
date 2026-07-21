@@ -115,15 +115,26 @@ export async function POST(req) {
       }
     }
 
-    const submission = await Submission.create({
-      testId,
-      studentId: user.userId,
-      answers,
-      score: totalScore,
-      tabSwitches,
-      timeTaken,
-      status: 'graded',
-    });
+    let submission = await Submission.findOne({ testId, studentId: user.userId, status: 'in_progress' });
+    
+    if (submission) {
+      submission.answers = answers;
+      submission.score = totalScore;
+      submission.tabSwitches = Math.max(submission.tabSwitches || 0, tabSwitches);
+      submission.timeTaken = timeTaken;
+      submission.status = 'graded';
+      await submission.save();
+    } else {
+      submission = await Submission.create({
+        testId,
+        studentId: user.userId,
+        answers,
+        score: totalScore,
+        tabSwitches,
+        timeTaken,
+        status: 'graded',
+      });
+    }
 
     return NextResponse.json({ message: 'Submission successful and graded', submission });
   } catch (error) {

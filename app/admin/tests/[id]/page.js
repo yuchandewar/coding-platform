@@ -23,6 +23,7 @@ export default function TestDetails() {
   const [testDefaultNegativeMarks, setTestDefaultNegativeMarks] = useState(0);
   const [testRevealScores, setTestRevealScores] = useState(false);
   const [testAllowMultipleSubmissions, setTestAllowMultipleSubmissions] = useState(false);
+  const [testStrictTimer, setTestStrictTimer] = useState(false);
   const [testShuffleQuestions, setTestShuffleQuestions] = useState(false);
   const [testIssueCertificate, setTestIssueCertificate] = useState(false);
   const [testOrganizationName, setTestOrganizationName] = useState('Coding Exam Platform');
@@ -89,6 +90,7 @@ export default function TestDetails() {
       setTestDefaultNegativeMarks(data.defaultNegativeMarks || 0);
       setTestRevealScores(data.revealScores || false);
       setTestAllowMultipleSubmissions(data.allowMultipleSubmissions || false);
+      setTestStrictTimer(data.strictTimer || false);
       setTestShuffleQuestions(data.shuffleQuestions || false);
       setTestIssueCertificate(data.issueCertificate || false);
       setTestOrganizationName(data.organizationName || 'Coding Exam Platform');
@@ -118,6 +120,7 @@ export default function TestDetails() {
           defaultNegativeMarks: testDefaultNegativeMarks,
           revealScores: testRevealScores,
           allowMultipleSubmissions: testAllowMultipleSubmissions,
+          strictTimer: testStrictTimer,
           shuffleQuestions: testShuffleQuestions,
           issueCertificate: testIssueCertificate,
           organizationName: testOrganizationName,
@@ -372,6 +375,13 @@ export default function TestDetails() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <input type="checkbox" id="allowMultiple" checked={testAllowMultipleSubmissions} onChange={(e) => setTestAllowMultipleSubmissions(e.target.checked)} />
               <label htmlFor="allowMultiple" style={{ fontSize: '14px', color: '#cbd5e1' }}>Allow Multiple Submissions</label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', gridColumn: '1 / -1' }}>
+              <input type="checkbox" id="strictTimer" checked={testStrictTimer} onChange={(e) => setTestStrictTimer(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+              <div>
+                <label htmlFor="strictTimer" style={{ fontSize: '14px', color: '#f8fafc', fontWeight: 'bold' }}>Enable Strict Timer</label>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Timer continues running on server if student leaves exam. Prevents refresh cheating.</div>
+              </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <input type="checkbox" id="shuffleQuestions" checked={testShuffleQuestions} onChange={(e) => setTestShuffleQuestions(e.target.checked)} />

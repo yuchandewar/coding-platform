@@ -97,11 +97,25 @@ export default function SubmissionDetails() {
             // Find the student's answer for this question
             const answer = submission.answers?.find(a => a.questionId === q._id);
             
+            let isAttempted = false;
+            if (answer) {
+              if (q.type === 'quiz') {
+                isAttempted = answer.selectedOptionIndex !== null && answer.selectedOptionIndex !== undefined;
+              } else if (q.type === 'programming') {
+                const base = q.baseCode?.[answer.language || 'javascript'] || '// Write your code here\n';
+                isAttempted = answer.code && answer.code.trim() !== base.trim() && answer.code.trim() !== '';
+              } else if (q.type === 'fill_in_the_blank') {
+                isAttempted = answer.textResponse && answer.textResponse.trim() !== '';
+              } else if (q.type === 'pairing') {
+                isAttempted = answer.pairedResponses && answer.pairedResponses.some(pr => pr.right && pr.right.trim() !== '');
+              }
+            }
+            
             return (
               <div key={q._id} className="glass-panel" style={{ padding: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <h4 style={{ color: 'var(--primary-color)' }}>Question {idx + 1} ({q.type})</h4>
-                  {!answer && <span style={{ color: '#ef4444', fontSize: '13px', fontWeight: 'bold' }}>Unanswered</span>}
+                  {!isAttempted && <span style={{ color: '#ef4444', fontSize: '12px', fontWeight: 'bold', padding: '4px 8px', background: 'rgba(239,68,68,0.2)', border: '1px solid #ef4444', borderRadius: '4px' }}>UNATTEMPTED</span>}
                 </div>
                 
                 <div style={{ color: '#cbd5e1', marginBottom: '20px', whiteSpace: 'pre-wrap' }}>

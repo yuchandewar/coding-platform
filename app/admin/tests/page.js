@@ -13,6 +13,7 @@ export default function ManageTests() {
   const [status, setStatus] = useState('draft');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [strictTimer, setStrictTimer] = useState(false);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -46,6 +47,7 @@ export default function ManageTests() {
           title, description, timerMinutes, status, 
           startTime: startTime ? new Date(startTime).toISOString() : null,
           endTime: endTime ? new Date(endTime).toISOString() : null,
+          strictTimer,
           questions: [] 
         })
       });
@@ -60,6 +62,7 @@ export default function ManageTests() {
       setStatus('draft');
       setStartTime('');
       setEndTime('');
+      setStrictTimer(false);
       fetchTests();
     } catch (err) {
       setError(err.message);
@@ -106,6 +109,13 @@ export default function ManageTests() {
                 <option value="live">Live</option>
                 <option value="expired">Expired</option>
               </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input type="checkbox" checked={strictTimer} onChange={(e) => setStrictTimer(e.target.checked)} style={{ width: '18px', height: '18px' }} />
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', color: '#f8fafc', fontWeight: 'bold' }}>Enable Strict Timer</label>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>Records start time. Timer continues running in background if student leaves.</span>
+              </div>
             </div>
             <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>Create Test</button>
           </form>
