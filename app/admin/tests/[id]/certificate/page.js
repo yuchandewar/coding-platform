@@ -194,17 +194,28 @@ export default function CertificateDesigner() {
               Upload a background image (or paste one), then add text elements and drag them into position.
             </p>
             
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={(e) => handleImageUpload(e.target.files[0])}
-                style={{ display: 'none' }}
-                id="cert-upload"
-              />
-              <label htmlFor="cert-upload" className="btn-primary" style={{ background: 'rgba(255,255,255,0.1)', cursor: 'pointer' }}>
-                {uploading ? 'Uploading...' : '📁 Upload Background Image'}
-              </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => handleImageUpload(e.target.files[0])}
+                  style={{ display: 'none' }}
+                  id="cert-upload"
+                />
+                <label htmlFor="cert-upload" className="btn-primary" style={{ background: 'rgba(255,255,255,0.1)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  {uploading ? 'Uploading...' : '📁 Upload Background Image'}
+                </label>
+                <div style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 'bold' }}>OR</div>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="Paste Image URL here..." 
+                  value={backgroundImage} 
+                  onChange={(e) => setBackgroundImage(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+              </div>
             </div>
 
             <div 
