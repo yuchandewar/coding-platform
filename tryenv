@@ -1,0 +1,20 @@
+# Database Connection String
+# Replace with your MongoDB Atlas URI if deploying to production
+MONGODB_URI="mongodb://127.0.0.1:27017/coding-platform"
+
+# Authentication Secrets
+# Change this to a random long string in production
+JWT_SECRET="super_secret_jwt_key_change_in_production_2026"
+
+# Admin Registration Secret
+# Required when a new user tries to register as an 'admin' role
+ADMIN_SECRET="codexam_admin_secret_2026"
+
+# Code Execution API (Judge0)
+# Default is the public API. Change if you self-host Judge0
+JUDGE0_API_URL="https://ce.judge0.com"
+
+# Security Configurations
+# Set to 'true' ONLY if you are deploying to a production server with proper HTTPS (e.g., Vercel)
+# Leave as 'false' for local network testing or localhost
+SECURE_COOKIE="false"
