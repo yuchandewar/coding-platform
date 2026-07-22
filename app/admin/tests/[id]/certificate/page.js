@@ -184,10 +184,10 @@ export default function CertificateDesigner() {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: '24px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
         
         {/* Left Side: Canvas Area */}
-        <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '300px' }}>
           <div className="glass-panel" style={{ padding: '24px' }}>
             <h3 style={{ marginBottom: '16px' }}>Visual Editor</h3>
             <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '16px' }}>
@@ -195,7 +195,7 @@ export default function CertificateDesigner() {
             </p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
                 <input 
                   type="file" 
                   accept="image/*" 
@@ -278,7 +278,7 @@ export default function CertificateDesigner() {
         </div>
 
         {/* Right Side: Tools & Settings */}
-        <div style={{ width: '350px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ flex: '1 1 350px', display: 'flex', flexDirection: 'column', gap: '24px', minWidth: '300px' }}>
           
           <div className="glass-panel" style={{ padding: '24px' }}>
             <h3 style={{ marginBottom: '16px' }}>Eligibility Rules</h3>

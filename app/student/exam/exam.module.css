@@ -1,0 +1,212 @@
+.examContainer {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.leftContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rightSidebar {
+  width: 320px;
+  background: #0f172a;
+  border-left: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+.programmingContainer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+}
+
+.editorSection {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebarOverlay {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 40;
+}
+
+.mobileMenuBtn {
+  display: none;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .examContainer {
+    flex-direction: column;
+  }
+  
+  .rightSidebar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    transform: translateX(100%);
+    z-index: 50;
+  }
+  
+  .rightSidebar.open {
+    transform: translateX(0);
+  }
+  
+  .sidebarOverlay.open {
+    display: block;
+  }
+  
+  .programmingContainer {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+  
+  .editorSection {
+    border-left: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  .mobileMenuBtn {
+    display: block;
+  }
+}
+
+/* Exam Navbar */
+.topNav {
+  height: 60px;
+  background: rgba(30, 41, 59, 1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+}
+.navTitle {
+  font-size: 18px;
+  margin: 0;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+.timerContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.timerLabel {
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: bold;
+}
+.timerDisplay {
+  font-size: 20px;
+  font-weight: bold;
+  background: rgba(0,0,0,0.3);
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+/* Bottom Action Bar */
+.bottomActionBar {
+  padding: 16px 24px;
+  background: rgba(15, 23, 42, 0.8);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.actionBtnGroup {
+  display: flex;
+  gap: 12px;
+}
+.actionBtn {
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Quiz Option */
+.quizOption {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* Mobile Adjustments for Exam UI */
+@media (max-width: 600px) {
+  .topNav {
+    padding: 0 12px;
+  }
+  .navTitle {
+    font-size: 16px;
+    max-width: 120px;
+  }
+  .timerLabel {
+    display: flex;
+    flex-direction: column;
+    font-size: 10px;
+    line-height: 1.2;
+    text-align: right;
+  }
+  .timerDisplay {
+    font-size: 16px;
+    padding: 4px 8px;
+  }
+  .bottomActionBar {
+    padding: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .actionBtnGroup {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .actionBtn {
+    padding: 10px 8px;
+    font-size: 12px;
+    white-space: normal;
+    line-height: 1.2;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .quizOption {
+    padding: 12px;
+    gap: 12px;
+  }
+}

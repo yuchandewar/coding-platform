@@ -86,3 +86,57 @@
 .pageHeader h1 {
   font-size: 28px;
 }
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+  .adminLayout {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .sidebarHeader {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 150px;
+  }
+  
+  .sidebarHeader h2 {
+    font-size: 18px;
+  }
+  
+  .nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 100%;
+    justify-content: center;
+  }
+  
+  .navItem {
+    padding: 8px 12px;
+    font-size: 14px;
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  
+  .logoutBtn {
+    margin-top: 0;
+    padding: 8px 16px;
+    width: auto;
+    font-size: 14px;
+  }
+  
+  .mainContent {
+    padding: 20px;
+  }
+}

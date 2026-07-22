@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Editor from '@monaco-editor/react';
+import styles from '../exam.module.css';
 
 export default function ExamPage() {
   const { id } = useParams();
@@ -17,6 +18,8 @@ export default function ExamPage() {
   const [unansweredCount, setUnansweredCount] = useState(0);
   const [notification, setNotification] = useState(null);
   const [warningMessage, setWarningMessage] = useState(null);
+  const [isMobileBlocked, setIsMobileBlocked] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Navigation State
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -179,6 +182,16 @@ export default function ExamPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       
+      // Mobile Blocker Check
+      if (data.mobileAccess === false) {
+        const isMobile = window.innerWidth <= 768 || /Mobi|Android|iPhone/i.test(navigator.userAgent);
+        if (isMobile) {
+          setIsMobileBlocked(true);
+          setLoading(false);
+          return;
+        }
+      }
+      
       // Shuffle questions if configured
       if (data.shuffleQuestions && data.questions && data.questions.length > 0) {
         for (let i = data.questions.length - 1; i > 0; i--) {
@@ -285,6 +298,8 @@ export default function ExamPage() {
     if (currentQuestionIndex < test.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setTestResults(null);
+    } else {
+      setMobileMenuOpen(true);
     }
   };
 
@@ -444,7 +459,15 @@ export default function ExamPage() {
   };
 
   if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading Exam...</div>;
-  if (!test) return <div style={{ padding: '40px', textAlign: 'center' }}>Test not found</div>;
+  if (isMobileBlocked) return (
+    <div style={{ padding: '40px', textAlign: 'center', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+      <h2 style={{ color: '#ef4444', marginBottom: '16px' }}>Mobile Access Restricted</h2>
+      <p style={{ color: '#94a3b8', maxWidth: '400px', lineHeight: '1.6' }}>
+        This exam has been configured by the administrator to run only on Desktop or Laptop computers to ensure proper layout and anti-cheating measures.
+      </p>
+    </div>
+  );
+  if (!test) return <div style={{ padding: '40px', textAlign: 'center' }}>Test not found.</div>;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0f172a', position: 'relative', userSelect: 'none', WebkitUserSelect: 'none' }}>
@@ -542,21 +565,26 @@ export default function ExamPage() {
       )}
 
       {/* Top Navbar */}
-      <div style={{ height: '60px', background: 'rgba(30, 41, 59, 1)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px' }}>
-        <h2 style={{ fontSize: '18px', margin: 0, color: '#f8fafc' }}>{test.title}</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ color: '#cbd5e1', fontSize: '14px', fontWeight: 'bold' }}>Time Left:</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: timeLeft < 300 ? '#ef4444' : '#f8fafc', background: 'rgba(0,0,0,0.3)', padding: '4px 12px', borderRadius: '4px' }}>
+      <div className={styles.topNav}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+          <button className={styles.mobileMenuBtn} onClick={() => setMobileMenuOpen(true)}>
+            ☰ Menu
+          </button>
+          <h2 className={styles.navTitle}>{test.title}</h2>
+        </div>
+        <div className={styles.timerContainer}>
+          <div className={styles.timerLabel}>Time Left:</div>
+          <div className={styles.timerDisplay} style={{ color: timeLeft < 300 ? '#ef4444' : '#f8fafc' }}>
             {formatTime(timeLeft)}
           </div>
         </div>
       </div>
 
       {/* Main Layout (Left Content + Right Sidebar) */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className={styles.examContainer}>
         
         {/* Left Side: Question & Response Area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className={styles.leftContent}>
           
           {/* Question Title Bar */}
           <div style={{ padding: '12px 24px', background: 'rgba(15, 23, 42, 0.8)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -579,11 +607,10 @@ export default function ExamPage() {
                   {currentQuestion.options?.map((opt, idx) => (
                     <label 
                       key={idx} 
+                      className={styles.quizOption}
                       style={{ 
-                        display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', 
                         background: currentAnswer.selectedOptionIndex === idx ? 'rgba(59, 130, 246, 0.2)' : 'rgba(0,0,0,0.2)', 
                         border: `1px solid ${currentAnswer.selectedOptionIndex === idx ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`,
-                        borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s'
                       }}
                     >
                       <input 
@@ -742,38 +769,55 @@ export default function ExamPage() {
           </div>
 
           {/* Sticky Footer */}
-          <div style={{ background: '#1e293b', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
+          <div className={styles.bottomActionBar}>
+            <div className={styles.actionBtnGroup}>
               <button 
                 onClick={handleMarkForReviewAndNext}
-                style={{ background: 'transparent', border: '1px solid #8b5cf6', color: '#8b5cf6', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>
+                className={styles.actionBtn}
+                style={{ background: 'transparent', border: '1px solid #8b5cf6', color: '#8b5cf6', cursor: 'pointer' }}>
                 Mark for Review & Next
               </button>
               <button 
                 onClick={handleClearResponse}
-                style={{ background: 'transparent', border: '1px solid #64748b', color: '#cbd5e1', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>
+                className={styles.actionBtn}
+                style={{ background: 'transparent', border: '1px solid #64748b', color: '#cbd5e1', cursor: 'pointer' }}>
                 Clear Response
               </button>
             </div>
             
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div className={styles.actionBtnGroup}>
               <button 
                 onClick={() => { setCurrentQuestionIndex(c => Math.max(0, c - 1)); setTestResults(null); }}
                 disabled={currentQuestionIndex === 0}
-                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#cbd5e1', padding: '8px 20px', borderRadius: '4px', fontWeight: 'bold', cursor: currentQuestionIndex === 0 ? 'not-allowed' : 'pointer' }}>
-                ← Previous
+                className={styles.actionBtn}
+                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#cbd5e1', cursor: currentQuestionIndex === 0 ? 'not-allowed' : 'pointer' }}>
+                &larr; Previous
               </button>
               <button 
                 onClick={handleSaveAndNext}
-                style={{ background: '#3b82f6', border: 'none', color: 'white', padding: '8px 24px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>
+                className={styles.actionBtn}
+                style={{ background: '#3b82f6', border: 'none', color: 'white', cursor: 'pointer' }}>
                 Save & Next
               </button>
             </div>
           </div>
         </div>
 
+        {/* Right Sidebar Overlay for Mobile */}
+        <div 
+          className={`${styles.sidebarOverlay} ${mobileMenuOpen ? styles.open : ''}`}
+          onClick={() => setMobileMenuOpen(false)}
+        ></div>
+
         {/* Right Sidebar: Question Palette */}
-        <div style={{ width: '320px', background: '#0f172a', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
+        <div className={`${styles.rightSidebar} ${mobileMenuOpen ? styles.open : ''}`}>
+          
+          <div style={{ padding: '16px', background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '14px', color: '#cbd5e1' }}>Question Palette</h3>
+            {mobileMenuOpen && (
+              <button onClick={() => setMobileMenuOpen(false)} style={{ background: 'none', color: '#ef4444', fontSize: '20px', padding: '0 8px' }}>&times;</button>
+            )}
+          </div>
           
           {/* User Info / Placeholder */}
           <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>

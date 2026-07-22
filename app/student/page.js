@@ -45,7 +45,7 @@ export default function StudentDashboard() {
       </div>
 
       {loading ? <p>Loading tests...</p> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
           {tests.length === 0 ? <p style={{ color: '#94a3b8' }}>No tests available at the moment.</p> : tests.map(test => (
             <div key={test._id} className="glass-panel" style={{ padding: '20px', transition: 'transform 0.2s', cursor: 'pointer' }} 
                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-5px)'}

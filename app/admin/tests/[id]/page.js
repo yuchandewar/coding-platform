@@ -24,6 +24,7 @@ export default function TestDetails() {
   const [testRevealScores, setTestRevealScores] = useState(false);
   const [testAllowMultipleSubmissions, setTestAllowMultipleSubmissions] = useState(false);
   const [testStrictTimer, setTestStrictTimer] = useState(false);
+  const [testMobileAccess, setTestMobileAccess] = useState(false);
   const [testShuffleQuestions, setTestShuffleQuestions] = useState(false);
   const [testIssueCertificate, setTestIssueCertificate] = useState(false);
   const [testOrganizationName, setTestOrganizationName] = useState('Coding Exam Platform');
@@ -91,6 +92,7 @@ export default function TestDetails() {
       setTestRevealScores(data.revealScores || false);
       setTestAllowMultipleSubmissions(data.allowMultipleSubmissions || false);
       setTestStrictTimer(data.strictTimer || false);
+      setTestMobileAccess(data.mobileAccess || false);
       setTestShuffleQuestions(data.shuffleQuestions || false);
       setTestIssueCertificate(data.issueCertificate || false);
       setTestOrganizationName(data.organizationName || 'Coding Exam Platform');
@@ -121,6 +123,7 @@ export default function TestDetails() {
           revealScores: testRevealScores,
           allowMultipleSubmissions: testAllowMultipleSubmissions,
           strictTimer: testStrictTimer,
+          mobileAccess: testMobileAccess,
           shuffleQuestions: testShuffleQuestions,
           issueCertificate: testIssueCertificate,
           organizationName: testOrganizationName,
@@ -381,6 +384,13 @@ export default function TestDetails() {
               <div>
                 <label htmlFor="strictTimer" style={{ fontSize: '14px', color: '#f8fafc', fontWeight: 'bold' }}>Enable Strict Timer</label>
                 <div style={{ fontSize: '12px', color: '#94a3b8' }}>Timer continues running on server if student leaves exam. Prevents refresh cheating.</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', gridColumn: '1 / -1' }}>
+              <input type="checkbox" id="mobileAccess" checked={testMobileAccess} onChange={(e) => setTestMobileAccess(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+              <div>
+                <label htmlFor="mobileAccess" style={{ fontSize: '14px', color: '#f8fafc', fontWeight: 'bold' }}>Allow Mobile Access</label>
+                <div style={{ fontSize: '12px', color: '#94a3b8' }}>If disabled, students will be blocked from taking this exam on mobile devices.</div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

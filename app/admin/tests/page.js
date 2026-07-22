@@ -14,6 +14,7 @@ export default function ManageTests() {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [strictTimer, setStrictTimer] = useState(false);
+  const [mobileAccess, setMobileAccess] = useState(false);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -48,6 +49,7 @@ export default function ManageTests() {
           startTime: startTime ? new Date(startTime).toISOString() : null,
           endTime: endTime ? new Date(endTime).toISOString() : null,
           strictTimer,
+          mobileAccess,
           questions: [] 
         })
       });
@@ -63,6 +65,7 @@ export default function ManageTests() {
       setStartTime('');
       setEndTime('');
       setStrictTimer(false);
+      setMobileAccess(false);
       fetchTests();
     } catch (err) {
       setError(err.message);
@@ -115,6 +118,13 @@ export default function ManageTests() {
               <div>
                 <label style={{ display: 'block', fontSize: '14px', color: '#f8fafc', fontWeight: 'bold' }}>Enable Strict Timer</label>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>Records start time. Timer continues running in background if student leaves.</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input type="checkbox" checked={mobileAccess} onChange={(e) => setMobileAccess(e.target.checked)} style={{ width: '18px', height: '18px' }} />
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', color: '#f8fafc', fontWeight: 'bold' }}>Allow Mobile Access</label>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>If disabled, students will be blocked from taking this exam on mobile devices.</span>
               </div>
             </div>
             <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>Create Test</button>

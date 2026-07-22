@@ -58,7 +58,7 @@ export default function InstructionsPage() {
         <h1 style={{ color: '#f8fafc', marginBottom: '12px' }}>{test.title} - Instructions</h1>
         <p style={{ color: '#94a3b8', fontSize: '16px', marginBottom: '32px' }}>{test.description}</p>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
           <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px' }}>
             <div style={{ color: '#cbd5e1', fontSize: '14px', marginBottom: '8px' }}>Duration</div>
             <div style={{ color: '#f8fafc', fontSize: '24px', fontWeight: 'bold' }}>{test.timerMinutes} Minutes</div>
