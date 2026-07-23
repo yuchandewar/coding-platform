@@ -34,6 +34,27 @@ export default function InstructionsPage() {
 
   const handleStart = () => {
     if (!agreed) return;
+    
+    // Anti-cheat: Check if Developer Tools are likely open by checking window dimensions
+    const widthDiff = window.outerWidth - window.innerWidth > 160;
+    const heightDiff = window.outerHeight - window.innerHeight > 160;
+    
+    if (widthDiff || heightDiff) {
+      alert("Please close your browser's Developer Tools and maximize your window before starting the exam.");
+      return;
+    }
+
+    // Anti-cheat: Debugger trick (Catches undocked DevTools)
+    // If DevTools is open, the browser will pause here. When the user resumes, time difference will be large.
+    const start = Date.now();
+    debugger;
+    const timeTaken = Date.now() - start;
+    
+    if (timeTaken > 100) {
+      alert("Developer Tools detected. Please close Developer Tools before starting the exam.");
+      return;
+    }
+
     router.push(`/student/exam/${id}`);
   };
 

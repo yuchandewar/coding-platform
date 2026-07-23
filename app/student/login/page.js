@@ -33,7 +33,9 @@ export default function StudentLogin() {
         throw new Error('Admins must log in through the admin portal');
       }
 
-      router.push('/student');
+      // Use window.location.href instead of router.push to force a hard reload.
+      // This ensures Next.js doesn't serve a cached unauthenticated page layout.
+      window.location.href = '/student';
     } catch (err) {
       setError(err.message);
     } finally {

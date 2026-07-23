@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 export default function FeedbackPage() {
@@ -11,6 +11,29 @@ export default function FeedbackPage() {
   const [hoverRating, setHoverRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [skipTimer, setSkipTimer] = useState(30);
+
+  useEffect(() => {
+    if (skipTimer > 0) {
+      const timer = setTimeout(() => setSkipTimer(skipTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [skipTimer]);
+
+  const exitFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch (err) {
+      console.error('Failed to exit full screen', err);
+    }
+  };
+
+  const handleSkip = async () => {
+    await exitFullscreen();
+    router.push('/student/results');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,6 +41,7 @@ export default function FeedbackPage() {
     
     setSubmitting(true);
     try {
+      await exitFullscreen();
       const res = await fetch(`/api/student/tests/${id}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,8 +106,14 @@ export default function FeedbackPage() {
           </div>
           
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button type="button" onClick={() => router.push('/student/results')} className="btn-primary" style={{ flex: 1, background: 'rgba(255,255,255,0.1)' }}>
-              Skip
+            <button 
+              type="button" 
+              onClick={handleSkip} 
+              disabled={skipTimer > 0}
+              className="btn-primary" 
+              style={{ flex: 1, background: skipTimer > 0 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)', cursor: skipTimer > 0 ? 'not-allowed' : 'pointer' }}
+            >
+              {skipTimer > 0 ? `Skip in ${skipTimer}s` : 'Skip'}
             </button>
             <button type="submit" disabled={submitting || rating === 0} className="btn-primary" style={{ flex: 1 }}>
               {submitting ? 'Submitting...' : 'Submit Feedback'}

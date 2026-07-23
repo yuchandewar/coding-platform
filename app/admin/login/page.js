@@ -33,7 +33,9 @@ export default function AdminLogin() {
         throw new Error('Access Denied. You are not an administrator.');
       }
 
-      router.push('/admin');
+      // Use window.location.href instead of router.push to force a hard reload.
+      // This ensures Next.js doesn't serve a cached unauthenticated page layout.
+      window.location.href = '/admin';
     } catch (err) {
       setError(err.message);
     } finally {
