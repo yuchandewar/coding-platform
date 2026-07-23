@@ -20,7 +20,10 @@ export async function GET() {
       let isEligible = false;
       const subObj = sub.toObject();
 
-      if (sub.testId?.issueCertificate && sub.testId?.revealScores && sub.score !== undefined) {
+      if (sub.disqualified) {
+        // Disqualified students get nothing
+        isEligible = false;
+      } else if (sub.testId?.issueCertificate && sub.testId?.revealScores && sub.score !== undefined) {
         const eligibility = sub.testId.certificateEligibility || { condition: 'all', threshold: 0 };
         if (eligibility.condition === 'all') {
           isEligible = true;
@@ -29,7 +32,8 @@ export async function GET() {
         } else if (eligibility.condition === 'rank') {
           const allSubmissions = await Submission.find({ 
             testId: sub.testId._id,
-            status: 'graded'
+            status: 'graded',
+            disqualified: { $ne: true }
           }).sort({ score: -1, timeTaken: 1 });
           const rank = allSubmissions.findIndex(s => s._id.toString() === sub._id.toString()) + 1;
           isEligible = rank <= eligibility.threshold;

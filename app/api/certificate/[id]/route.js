@@ -19,6 +19,10 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: 'Certificate not found' }, { status: 404 });
     }
 
+    if (submission.disqualified) {
+      return NextResponse.json({ error: 'Student disqualified' }, { status: 403 });
+    }
+
     if (!submission.testId?.issueCertificate) {
       return NextResponse.json({ error: 'This test does not issue certificates' }, { status: 403 });
     }
@@ -38,7 +42,8 @@ export async function GET(req, { params }) {
     // Fetch all graded submissions for this test
     const allSubmissions = await Submission.find({ 
       testId: submission.testId._id,
-      status: 'graded'
+      status: 'graded',
+      disqualified: { $ne: true }
     }).sort({ score: -1, timeTaken: 1 });
 
     const rank = allSubmissions.findIndex(s => s._id.toString() === submission._id.toString()) + 1;

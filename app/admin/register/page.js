@@ -8,6 +8,9 @@ export default function AdminRegister() {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [adminSecret, setAdminSecret] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,6 +19,12 @@ export default function AdminRegister() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -79,28 +88,64 @@ export default function AdminRegister() {
 
           <div className={styles.inputGroup}>
             <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              className="input-field"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                className="input-field"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                style={{ paddingRight: '40px', width: '100%', boxSizing: 'border-box' }}
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '5px' }}
+              >
+                {showPassword ? '👁️‍🗨️' : '👁️'}
+              </button>
+            </div>
+          </div>
+          
+          <div className={styles.inputGroup}>
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                className="input-field"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                style={{ paddingRight: '40px', width: '100%', boxSizing: 'border-box' }}
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '5px' }}
+              >
+                {showConfirmPassword ? '👁️‍🗨️' : '👁️'}
+              </button>
+            </div>
           </div>
           
           <div className={styles.inputGroup}>
             <label htmlFor="adminSecret">Admin Secret Key</label>
-            <input
-              id="adminSecret"
-              type="password"
-              className="input-field"
-              value={adminSecret}
-              onChange={(e) => setAdminSecret(e.target.value)}
-              required
-              placeholder="Required to create admin account"
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                id="adminSecret"
+                type="password"
+                className="input-field"
+                value={adminSecret}
+                onChange={(e) => setAdminSecret(e.target.value)}
+                required
+                placeholder="Required to create admin account"
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
           </div>
 
           <button type="submit" className={`btn-primary ${styles.submitBtn}`} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }} disabled={loading}>

@@ -66,6 +66,10 @@ const SubmissionSchema = new mongoose.Schema({
   },
   feedbackText: {
     type: String,
+  },
+  disqualified: {
+    type: Boolean,
+    default: false,
   }
 }, { timestamps: true });
 

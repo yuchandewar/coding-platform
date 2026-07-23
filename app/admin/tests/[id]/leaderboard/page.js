@@ -29,6 +29,25 @@ export default function LeaderboardPage() {
     }
   };
 
+  const handleToggleDisqualify = async (submissionId, currentStatus) => {
+    if (!confirm(`Are you sure you want to ${currentStatus ? 're-qualify' : 'disqualify'} this student?`)) return;
+    
+    try {
+      const res = await fetch(`/api/admin/submissions/${submissionId}/disqualify`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ disqualified: !currentStatus })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      // Refetch from server to automatically apply correct re-ranking and sorting
+      await fetchLeaderboard();
+    } catch (err) {
+      alert('Error updating disqualification status: ' + err.message);
+    }
+  };
+
   const formatTime = (seconds) => {
     if (seconds === undefined || seconds === null) return 'N/A';
     const m = Math.floor(seconds / 60);
@@ -100,16 +119,24 @@ export default function LeaderboardPage() {
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Time Taken</th>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Tab Switches</th>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Submitted On</th>
+                    <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.leaderboard.map((sub) => (
-                    <tr key={sub.submissionId} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: sub.rank === 1 ? 'rgba(251, 191, 36, 0.1)' : sub.rank === 2 ? 'rgba(226, 232, 240, 0.1)' : sub.rank === 3 ? 'rgba(180, 83, 9, 0.1)' : 'transparent' }}>
+                    <tr key={sub.submissionId} style={{ 
+                      borderBottom: '1px solid rgba(255,255,255,0.05)', 
+                      background: sub.rank === 1 ? 'rgba(251, 191, 36, 0.1)' : sub.rank === 2 ? 'rgba(226, 232, 240, 0.1)' : sub.rank === 3 ? 'rgba(180, 83, 9, 0.1)' : 'transparent',
+                      opacity: sub.disqualified ? 0.5 : 1,
+                      textDecoration: sub.disqualified ? 'line-through' : 'none'
+                    }}>
                       <td style={{ padding: '12px 8px', fontWeight: 'bold', fontSize: '18px', color: sub.rank === 1 ? '#fbbf24' : sub.rank === 2 ? '#e2e8f0' : sub.rank === 3 ? '#b45309' : '#94a3b8' }}>
-                        #{sub.rank}
+                        {sub.rank === '-' ? '-' : `#${sub.rank}`}
                       </td>
                       <td style={{ padding: '12px 8px' }}>
-                        <div style={{ fontWeight: 'bold', color: 'white' }}>{sub.studentName}</div>
+                        <div style={{ fontWeight: 'bold', color: sub.disqualified ? '#ef4444' : 'white' }}>
+                          {sub.studentName} {sub.disqualified && '(Disqualified)'}
+                        </div>
                         <div style={{ fontSize: '12px', color: '#94a3b8' }}>ID: {sub.studentUsername}</div>
                       </td>
                       <td style={{ padding: '12px 8px', fontWeight: 'bold', color: sub.score >= 50 ? 'var(--success-color)' : 'var(--danger-color)' }}>
@@ -123,6 +150,23 @@ export default function LeaderboardPage() {
                       </td>
                       <td style={{ padding: '12px 8px', color: '#94a3b8', fontSize: '14px' }}>
                         {new Date(sub.createdAt).toLocaleString()}
+                      </td>
+                      <td style={{ padding: '12px 8px' }}>
+                        <button
+                          onClick={() => handleToggleDisqualify(sub.submissionId, sub.disqualified)}
+                          style={{
+                            padding: '6px 12px',
+                            background: sub.disqualified ? 'rgba(255,255,255,0.1)' : 'var(--danger-color)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          {sub.disqualified ? 'Undo Disqualify' : 'X'}
+                        </button>
                       </td>
                     </tr>
                   ))}

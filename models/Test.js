@@ -98,6 +98,10 @@ const TestSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  forgiveTabSwitches: {
+    type: Number,
+    default: 0,
+  },
   organizationName: {
     type: String,
     default: 'Coding Exam Platform',

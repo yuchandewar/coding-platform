@@ -25,6 +25,7 @@ export default function TestDetails() {
   const [testAllowMultipleSubmissions, setTestAllowMultipleSubmissions] = useState(false);
   const [testStrictTimer, setTestStrictTimer] = useState(false);
   const [testMobileAccess, setTestMobileAccess] = useState(false);
+  const [testForgiveTabSwitches, setTestForgiveTabSwitches] = useState(0);
   const [testShuffleQuestions, setTestShuffleQuestions] = useState(false);
   const [testIssueCertificate, setTestIssueCertificate] = useState(false);
   const [testOrganizationName, setTestOrganizationName] = useState('Coding Exam Platform');
@@ -93,6 +94,7 @@ export default function TestDetails() {
       setTestAllowMultipleSubmissions(data.allowMultipleSubmissions || false);
       setTestStrictTimer(data.strictTimer || false);
       setTestMobileAccess(data.mobileAccess || false);
+      setTestForgiveTabSwitches(data.forgiveTabSwitches || 0);
       setTestShuffleQuestions(data.shuffleQuestions || false);
       setTestIssueCertificate(data.issueCertificate || false);
       setTestOrganizationName(data.organizationName || 'Coding Exam Platform');
@@ -124,6 +126,7 @@ export default function TestDetails() {
           allowMultipleSubmissions: testAllowMultipleSubmissions,
           strictTimer: testStrictTimer,
           mobileAccess: testMobileAccess,
+          forgiveTabSwitches: testForgiveTabSwitches,
           shuffleQuestions: testShuffleQuestions,
           issueCertificate: testIssueCertificate,
           organizationName: testOrganizationName,
@@ -393,6 +396,25 @@ export default function TestDetails() {
                 <div style={{ fontSize: '12px', color: '#94a3b8' }}>If disabled, students will be blocked from taking this exam on mobile devices.</div>
               </div>
             </div>
+            
+            <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
+              <label htmlFor="forgiveTabSwitches" style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#f8fafc', fontWeight: 'bold' }}>
+                Tab Switch Forgiveness (Count)
+              </label>
+              <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>
+                If a student switches tabs this number of times or less, it will be completely forgiven (treated as 0 tab switches) on the Leaderboard.
+              </div>
+              <input 
+                type="number" 
+                id="forgiveTabSwitches" 
+                className="input-field" 
+                min="0" 
+                value={testForgiveTabSwitches} 
+                onChange={(e) => setTestForgiveTabSwitches(Number(e.target.value))} 
+                style={{ width: '120px' }}
+              />
+            </div>
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <input type="checkbox" id="shuffleQuestions" checked={testShuffleQuestions} onChange={(e) => setTestShuffleQuestions(e.target.checked)} />
               <label htmlFor="shuffleQuestions" style={{ fontSize: '14px', color: '#cbd5e1' }}>Shuffle Questions for Students</label>

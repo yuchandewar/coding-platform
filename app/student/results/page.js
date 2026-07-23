@@ -48,12 +48,12 @@ export default function StudentResults() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                       <span style={{ fontSize: '14px', color: '#cbd5e1' }}>Final Score:</span>
                       <span style={{ 
-                        fontSize: sub.testId?.revealScores && sub.score !== undefined ? '24px' : '16px', 
+                        fontSize: sub.disqualified ? '24px' : (sub.testId?.revealScores && sub.score !== undefined ? '24px' : '16px'), 
                         fontWeight: 'bold', 
-                        color: sub.testId?.revealScores ? (sub.score >= 50 ? 'var(--success-color)' : 'var(--danger-color)') : '#f59e0b',
+                        color: sub.disqualified ? 'var(--danger-color)' : (sub.testId?.revealScores ? (sub.score >= 50 ? 'var(--success-color)' : 'var(--danger-color)') : '#f59e0b'),
                         textAlign: 'right'
                       }}>
-                        {sub.testId?.revealScores ? (sub.score !== undefined ? `${sub.score.toFixed(2)}%` : 'Pending') : 'Result Not Declared'}
+                        {sub.disqualified ? 'Disqualified' : (sub.testId?.revealScores ? (sub.score !== undefined ? `${sub.score.toFixed(2)}%` : 'Pending') : 'Result Not Declared')}
                       </span>
                     </div>
                     {sub.isCertificateEligible && (
