@@ -19,6 +19,18 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  geminiApiKey: {
+    type: String,
+  },
+  geminiModel: {
+    type: String,
+    default: 'gemini-1.5-flash-latest'
+  },
 }, { timestamps: true });
 
-export default mongoose.models.User || mongoose.model('User', UserSchema);
+// Delete the cached model to force recompilation during Next.js Hot Reload
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+export default mongoose.model('User', UserSchema);

@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from '../admin.module.css';
 
 export default function ManageTests() {
+  const router = useRouter();
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -27,7 +29,12 @@ export default function ManageTests() {
     try {
       const res = await fetch('/api/admin/tests');
       const data = await res.json();
-      setTests(data);
+      if (res.ok && Array.isArray(data)) {
+        setTests(data);
+      } else {
+        console.error('Failed to fetch tests:', data);
+        setTests([]);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -151,7 +158,7 @@ export default function ManageTests() {
                         Leaderboard
                       </button>
                       <button 
-                        onClick={() => window.location.href = `/admin/tests/${test._id}`}
+                        onClick={() => router.push(`/admin/tests/${test._id}`)} 
                         className="btn-primary" 
                         style={{ padding: '6px 12px', fontSize: '12px', background: 'var(--primary-color)' }}
                       >

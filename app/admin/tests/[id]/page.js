@@ -37,6 +37,68 @@ export default function TestDetails() {
   const [questionType, setQuestionType] = useState('programming');
   const [questionText, setQuestionText] = useState('');
   const [questionNegativeMarks, setQuestionNegativeMarks] = useState('');
+
+  // AI Question Generator state
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiCount, setAiCount] = useState(3);
+  const [aiType, setAiType] = useState('quiz');
+  const [aiGenerating, setAiGenerating] = useState(false);
+
+  // Load Test Data
+  useEffect(() => {
+    fetchTest();
+    // Initialize default code blocks
+    setBaseCode({...defaultBaseCode});
+    setDriverCode({...defaultDriverCode});
+  }, [id]);
+
+  const handleGenerateAIQuestions = async () => {
+    if (!aiPrompt) return alert('Please enter a topic/prompt');
+    setAiGenerating(true);
+    try {
+      const existingQuestions = test?.questions ? test.questions.map(q => q.questionText) : [];
+      
+      const res = await fetch('/api/admin/generate-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt: aiPrompt, 
+          count: Number(aiCount), 
+          type: aiType,
+          existingQuestions
+        })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to generate questions');
+      }
+
+      // Generate a valid 24-character hex ObjectId for each new question so they can be edited/deleted safely before saving to the DB
+      const generateObjectId = () => {
+        const timestamp = (Math.floor(Date.now() / 1000)).toString(16);
+        const random = 'xxxxxxxxxxxxxxxx'.replace(/[x]/g, () => Math.floor(Math.random() * 16).toString(16));
+        return timestamp + random;
+      };
+
+      const questionsWithIds = data.questions.map(q => ({
+        ...q,
+        _id: generateObjectId()
+      }));
+      
+      setTest(prev => ({
+        ...prev,
+        questions: [...(prev.questions || []), ...questionsWithIds]
+      }));
+      
+      alert(`Successfully generated ${data.questions.length} questions! Review them in the list and click "Save Configuration" at the bottom to keep them.`);
+      setAiPrompt('');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setAiGenerating(false);
+    }
+  };
   
   // Programming specific state
   const [testCases, setTestCases] = useState([{ input: '', expectedOutput: '', isHidden: false }]);
@@ -144,6 +206,29 @@ export default function TestDetails() {
     }
   };
 
+  const handleDeleteTest = async () => {
+    const password = window.prompt('WARNING: This will permanently delete this test. Please enter your admin password to confirm:');
+    if (!password) return;
+
+    try {
+      const res = await fetch(`/api/admin/tests/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete test');
+      }
+      
+      alert('Test successfully deleted.');
+      router.push('/admin/tests');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const addTestCase = () => {
     setTestCases([...testCases, { input: '', expectedOutput: '', isHidden: false }]);
   };
@@ -246,6 +331,28 @@ export default function TestDetails() {
       if (editingQuestionId === questionId) cancelEdit();
     } catch (err) {
       alert('Failed to delete question');
+    }
+  };
+
+  const handleSaveAllQuestions = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/tests/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions: test.questions })
+      });
+      if (res.ok) {
+        const updatedTest = await res.json();
+        setTest(updatedTest);
+        alert('All questions successfully saved to the database!');
+      } else {
+        alert('Failed to save questions.');
+      }
+    } catch (err) {
+      alert('Error saving questions.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -441,9 +548,17 @@ export default function TestDetails() {
                 </div>
               </>
             )}
-            <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
-              <button type="submit" className="btn-primary" disabled={configSaving}>
+            <div style={{ gridColumn: '1 / -1', marginTop: '10px', display: 'flex', gap: '12px' }}>
+              <button type="submit" className="btn-primary" disabled={configSaving} style={{ flex: 1 }}>
                 {configSaving ? 'Saving...' : 'Save Configuration'}
+              </button>
+              <button 
+                type="button" 
+                onClick={handleDeleteTest} 
+                className="btn-primary" 
+                style={{ flex: 1, background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.5)', color: 'var(--danger-color)' }}
+              >
+                Delete Test
               </button>
             </div>
           </form>
@@ -453,7 +568,9 @@ export default function TestDetails() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '30px' }}>
         {/* Left Side: Existing Questions */}
         <div className="glass-panel" style={{ padding: '24px', height: 'fit-content' }}>
-          <h3>Existing Questions ({test.questions?.length || 0})</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3>Existing Questions ({test.questions?.length || 0})</h3>
+          </div>
           <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {test.questions?.map((q, idx) => (
               <div key={q._id || idx} style={{ padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -497,7 +614,47 @@ export default function TestDetails() {
         </div>
 
         {/* Right Side: Add New Question */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
+        <div>
+          {!editingQuestionId && (
+            <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px', background: 'linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, rgba(0,0,0,0.3) 100%)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>✨</span> AI Question Generator
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Topic / Prompt</label>
+                  <input type="text" className="input-field" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder="e.g. Intermediate React Hooks" />
+                </div>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Question Type</label>
+                    <select className="input-field" value={aiType} onChange={e => setAiType(e.target.value)} style={{ width: '100%' }}>
+                      <option value="quiz">Multiple Choice (Quiz)</option>
+                      <option value="fill_in_the_blank">Fill in the Blank</option>
+                      <option value="pairing">Pairing</option>
+                      <option value="programming">Programming</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Number of Questions</label>
+                    <input type="number" min="1" max="20" className="input-field" value={aiCount} onChange={e => setAiCount(e.target.value)} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button type="button" onClick={handleGenerateAIQuestions} disabled={aiGenerating || !aiPrompt} className="btn-primary" style={{ background: '#10b981', flex: 1, cursor: (aiGenerating || !aiPrompt) ? 'not-allowed' : 'pointer' }}>
+                    {aiGenerating ? 'Generating...' : 'Generate Questions'}
+                  </button>
+                  {test.questions?.length > 0 && (
+                    <button type="button" onClick={handleSaveAllQuestions} disabled={saving} className="btn-primary" style={{ flex: 1, background: '#3b82f6', border: '1px solid #2563eb' }}>
+                      {saving ? 'Saving...' : '💾 Save All Questions to DB'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="glass-panel" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h3>{editingQuestionId ? `Edit ${questionType === 'programming' ? 'Programming' : 'Quiz'} Question` : 'Add New Question'}</h3>
             {editingQuestionId && (
@@ -741,6 +898,7 @@ export default function TestDetails() {
               {saving ? 'Saving...' : (editingQuestionId ? 'Update Question' : 'Save Question')}
             </button>
           </form>
+        </div>
         </div>
       </div>
     </div>

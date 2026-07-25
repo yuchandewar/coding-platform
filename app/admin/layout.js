@@ -33,6 +33,9 @@ export default function AdminLayout({ children }) {
           <Link href="/admin/submissions" className={`${styles.navItem} ${pathname.includes('/admin/submissions') ? styles.active : ''}`}>
             Submissions
           </Link>
+          <Link href="/admin/settings" className={`${styles.navItem} ${pathname.includes('/admin/settings') ? styles.active : ''}`}>
+            Settings
+          </Link>
         </nav>
         <button onClick={handleLogout} className={styles.logoutBtn}>
           Logout
