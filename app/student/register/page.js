@@ -26,11 +26,17 @@ export default function StudentRegister() {
     
     setLoading(true);
 
+    const formattedName = name
+      .trim()
+      .split(/\s+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, username, password, role: 'student' }),
+        body: JSON.stringify({ name: formattedName, username, password, role: 'student' }),
       });
 
       const data = await res.json();
