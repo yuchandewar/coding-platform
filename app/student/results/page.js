@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import styles from '../../admin/admin.module.css'; // Reusing layout styles
 
 export default function StudentResults() {
@@ -58,13 +59,18 @@ export default function StudentResults() {
                     </div>
                     {sub.isCertificateEligible && (
                       <div style={{ marginTop: '16px' }}>
-                        <button 
-                          onClick={() => window.open(`/student/certificate/${sub._id}`, '_blank')}
-                          className="btn-primary" 
-                          style={{ width: '100%', padding: '10px', background: '#3b82f6', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                        <Link 
+                          href={`/student/certificate/${sub._id}`} 
+                          target="_blank"
+                          style={{ textDecoration: 'none' }}
                         >
-                          🏅 View Certificate
-                        </button>
+                          <button 
+                            className="btn-primary" 
+                            style={{ width: '100%', padding: '10px', background: '#3b82f6', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                          >
+                            🏅 View Certificate
+                          </button>
+                        </Link>
                       </div>
                     )}
                   </div>
