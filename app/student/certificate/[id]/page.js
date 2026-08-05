@@ -20,6 +20,28 @@ export default function CertificatePage() {
         const data = await res.json();
         
         if (res.ok) {
+          if (data.template && data.template.backgroundImage) {
+            try {
+              let targetUrl = data.template.backgroundImage;
+              if (targetUrl.startsWith('http')) {
+                targetUrl = `/api/proxy-image?url=${encodeURIComponent(targetUrl)}`;
+              }
+
+              const imgRes = await fetch(targetUrl);
+              const blob = await imgRes.blob();
+              
+              const base64Data = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+              
+              data.template.backgroundImage = base64Data;
+            } catch (e) {
+              console.error('Failed to convert bg image to base64', e);
+            }
+          }
           setCertData(data);
         } else {
           setError(data.error || 'Failed to load certificate');
@@ -184,7 +206,7 @@ export default function CertificatePage() {
               height: '707px',
               transform: `scale(${scale})`,
               transformOrigin: 'top left',
-              background: `url(${certData.template.backgroundImage}) center/100% 100% no-repeat`,
+              background: 'transparent',
               position: 'absolute',
               top: 0,
               left: 0,
@@ -193,6 +215,20 @@ export default function CertificatePage() {
               '--cert-width': '1000px'
             }}
           >
+            {/* Real img tag instead of CSS background-image for reliable html2canvas export */}
+            <img 
+              src={certData.template.backgroundImage} 
+              alt="Certificate Background"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'fill',
+                zIndex: 0
+              }}
+            />
             {certData.template.elements?.map((el, idx) => {
               let displayTxt = el.customText;
               if (el.type === 'studentName') displayTxt = certData.studentName;
@@ -214,6 +250,7 @@ export default function CertificatePage() {
                     color: el.color,
                     fontFamily: el.fontFamily,
                     whiteSpace: 'nowrap',
+                    zIndex: 1,
                   }}
                 >
                   {displayTxt}
