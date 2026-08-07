@@ -58,7 +58,7 @@ export default function LeaderboardPage() {
   const handleDownloadCSV = () => {
     if (!data || !data.leaderboard || data.leaderboard.length === 0) return;
     
-    const headers = ['Rank', 'Student Name', 'Username', 'Score', 'Time Taken', 'Tab Switches', 'Submitted On'];
+    const headers = ['Rank', 'Student Name', 'Username', 'Score', 'Time Taken', 'Tab Switches', 'Rating', 'Feedback', 'Submitted On'];
     const csvRows = [headers.join(',')];
     
     data.leaderboard.forEach(sub => {
@@ -69,6 +69,8 @@ export default function LeaderboardPage() {
         sub.score?.toFixed(2) || 0,
         formatTime(sub.timeTaken),
         sub.tabSwitches || 0,
+        sub.rating || 'N/A',
+        `"${(sub.feedbackText || '').replace(/"/g, '""')}"`,
         `"${new Date(sub.createdAt).toLocaleString()}"`
       ];
       csvRows.push(row.join(','));
@@ -118,6 +120,8 @@ export default function LeaderboardPage() {
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Score</th>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Time Taken</th>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Tab Switches</th>
+                    <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Rating</th>
+                    <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Feedback</th>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Submitted On</th>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Actions</th>
                   </tr>
@@ -147,6 +151,12 @@ export default function LeaderboardPage() {
                       </td>
                       <td style={{ padding: '12px 8px', color: sub.tabSwitches > 0 ? 'var(--danger-color)' : '#cbd5e1', fontWeight: sub.tabSwitches > 0 ? 'bold' : 'normal' }}>
                         {sub.tabSwitches || 0}
+                      </td>
+                      <td style={{ padding: '12px 8px', color: '#fbbf24', fontWeight: 'bold' }}>
+                        {sub.rating ? `${sub.rating}/5` : 'N/A'}
+                      </td>
+                      <td style={{ padding: '12px 8px', color: '#cbd5e1', fontSize: '13px', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={sub.feedbackText}>
+                        {sub.feedbackText || 'None'}
                       </td>
                       <td style={{ padding: '12px 8px', color: '#94a3b8', fontSize: '14px' }}>
                         {new Date(sub.createdAt).toLocaleString()}

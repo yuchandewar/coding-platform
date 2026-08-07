@@ -73,6 +73,8 @@ export async function GET(req, { params }) {
           tabSwitches: sub.tabSwitches || 0,
           createdAt: sub.createdAt,
           disqualified: isDisqualified,
+          rating: sub.rating || null,
+          feedbackText: sub.feedbackText || '',
         };
       })
     });
