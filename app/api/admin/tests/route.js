@@ -25,7 +25,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, description, timerMinutes, status, startTime, endTime, questions, strictTimer, mobileAccess } = await req.json();
+    const { title, description, timerMinutes, status, startTime, endTime, questions, strictTimer, mobileAccess, saveAnswersMode, feedbackTimer, resultMetrics } = await req.json();
 
     if (!title || !timerMinutes) {
       return NextResponse.json({ error: 'Title and Timer are required' }, { status: 400 });
@@ -42,6 +42,9 @@ export async function POST(req) {
       endTime,
       strictTimer: strictTimer || false,
       mobileAccess: mobileAccess || false,
+      saveAnswersMode: saveAnswersMode || 'local',
+      feedbackTimer: feedbackTimer || 30,
+      resultMetrics: resultMetrics || ['marks', 'percentage', 'correct_answers'],
       questions: questions || [],
       createdBy: user.userId,
     });

@@ -17,6 +17,9 @@ export default function ManageTests() {
   const [endTime, setEndTime] = useState('');
   const [strictTimer, setStrictTimer] = useState(false);
   const [mobileAccess, setMobileAccess] = useState(false);
+  const [saveAnswersMode, setSaveAnswersMode] = useState('local');
+  const [feedbackTimer, setFeedbackTimer] = useState(30);
+  const [resultMetrics, setResultMetrics] = useState(['marks', 'percentage', 'correct_answers']);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -57,6 +60,9 @@ export default function ManageTests() {
           endTime: endTime ? new Date(endTime).toISOString() : null,
           strictTimer,
           mobileAccess,
+          saveAnswersMode,
+          feedbackTimer,
+          resultMetrics,
           questions: [] 
         })
       });
@@ -73,6 +79,9 @@ export default function ManageTests() {
       setEndTime('');
       setStrictTimer(false);
       setMobileAccess(false);
+      setSaveAnswersMode('local');
+      setFeedbackTimer(30);
+      setResultMetrics(['marks', 'percentage', 'correct_answers']);
       fetchTests();
     } catch (err) {
       setError(err.message);
@@ -132,6 +141,36 @@ export default function ManageTests() {
               <div>
                 <label style={{ display: 'block', fontSize: '14px', color: '#f8fafc', fontWeight: 'bold' }}>Allow Mobile Access</label>
                 <span style={{ fontSize: '12px', color: '#94a3b8' }}>If disabled, students will be blocked from taking this exam on mobile devices.</span>
+              </div>
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Save Answers Strategy</label>
+              <select className="input-field" value={saveAnswersMode} onChange={(e) => setSaveAnswersMode(e.target.value)}>
+                <option value="local">Local Cache (Browser localStorage)</option>
+                <option value="server">Server-side Auto-save</option>
+              </select>
+              <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Server-side saves drafts continuously to prevent data loss on device failure.</div>
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Feedback Skip Timer (Seconds)</label>
+              <input type="number" min="0" className="input-field" value={feedbackTimer === '' ? '' : feedbackTimer} onChange={(e) => setFeedbackTimer(e.target.value === '' ? '' : parseInt(e.target.value))} required />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Result Metrics Shown to Students</label>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                {['marks', 'percentage', 'correct_answers', 'percentile'].map(metric => (
+                  <label key={metric} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#f8fafc', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={resultMetrics.includes(metric)}
+                      onChange={(e) => {
+                        if (e.target.checked) setResultMetrics([...resultMetrics, metric]);
+                        else setResultMetrics(resultMetrics.filter(m => m !== metric));
+                      }}
+                    />
+                    {metric.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </label>
+                ))}
               </div>
             </div>
             <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>Create Test</button>

@@ -6,9 +6,17 @@ const QuestionSchema = new mongoose.Schema({
     enum: ['programming', 'quiz', 'fill_in_the_blank', 'pairing'],
     required: true,
   },
+  category: {
+    type: String,
+    default: '',
+  },
   questionText: {
     type: String,
     required: true,
+  },
+  marks: {
+    type: Number,
+    default: 1, // Default marks for each question
   },
   negativeMarks: {
     type: Number, // Override for specific question
@@ -98,13 +106,26 @@ const TestSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  saveAnswersMode: {
+    type: String,
+    enum: ['local', 'server'],
+    default: 'local',
+  },
   forgiveTabSwitches: {
     type: Number,
     default: 0,
   },
+  feedbackTimer: {
+    type: Number,
+    default: 30,
+  },
   organizationName: {
     type: String,
     default: 'Coding Exam Platform',
+  },
+  resultMetrics: {
+    type: [String],
+    default: ['marks', 'percentage', 'correct_answers'], // 'percentile' omitted by default to preserve classic behavior
   },
   eventName: {
     type: String,

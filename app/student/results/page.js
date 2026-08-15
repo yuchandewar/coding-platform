@@ -46,16 +46,53 @@ export default function StudentResults() {
                       <span>{new Date(sub.createdAt).toLocaleDateString()}</span>
                     </div>
                     
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                      <span style={{ fontSize: '14px', color: '#cbd5e1' }}>Final Score:</span>
-                      <span style={{ 
-                        fontSize: sub.disqualified ? '24px' : (sub.testId?.revealScores && sub.score !== undefined ? '24px' : '16px'), 
-                        fontWeight: 'bold', 
-                        color: sub.disqualified ? 'var(--danger-color)' : (sub.testId?.revealScores ? (sub.score >= 50 ? 'var(--success-color)' : 'var(--danger-color)') : '#f59e0b'),
-                        textAlign: 'right'
-                      }}>
-                        {sub.disqualified ? 'Disqualified' : (sub.testId?.revealScores ? (sub.score !== undefined ? `${sub.score.toFixed(2)}%` : 'Pending') : 'Result Not Declared')}
-                      </span>
+                    <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {sub.disqualified ? (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '14px', color: '#cbd5e1' }}>Status:</span>
+                          <span style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--danger-color)', textAlign: 'right' }}>Disqualified</span>
+                        </div>
+                      ) : (sub.testId?.revealScores && sub.score !== undefined) ? (
+                        <>
+                          {(sub.testId.resultMetrics ? sub.testId.resultMetrics.includes('marks') : false) && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '14px', color: '#cbd5e1' }}>Marks:</span>
+                              <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#f8fafc' }}>
+                                {sub.score} / {sub.maxScore || '?'}
+                              </span>
+                            </div>
+                          )}
+                          {(sub.testId.resultMetrics ? sub.testId.resultMetrics.includes('correct_answers') : false) && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '14px', color: '#cbd5e1' }}>Correct Answers:</span>
+                              <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#f8fafc' }}>
+                                {sub.correctAnswers || 0}
+                              </span>
+                            </div>
+                          )}
+                          {(sub.testId.resultMetrics ? sub.testId.resultMetrics.includes('percentage') : true) && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '14px', color: '#cbd5e1' }}>Percentage:</span>
+                              <span style={{ fontSize: '16px', fontWeight: 'bold', color: sub.score >= (sub.maxScore ? sub.maxScore / 2 : 50) ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                                {sub.maxScore ? ((sub.score / sub.maxScore) * 100).toFixed(2) : (sub.score !== undefined ? sub.score.toFixed(2) : 0)}%
+                              </span>
+                            </div>
+                          )}
+                          {(sub.testId.resultMetrics?.includes('percentile')) && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '14px', color: '#cbd5e1' }}>Percentile:</span>
+                              <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#8b5cf6' }}>
+                                {sub.percentile}%
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '14px', color: '#cbd5e1' }}>Result:</span>
+                          <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#f59e0b', textAlign: 'right' }}>Pending / Not Declared</span>
+                        </div>
+                      )}
                     </div>
                     {sub.isCertificateEligible && (
                       <div style={{ marginTop: '16px' }}>

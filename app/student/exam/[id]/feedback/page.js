@@ -14,6 +14,18 @@ export default function FeedbackPage() {
   const [skipTimer, setSkipTimer] = useState(30);
 
   useEffect(() => {
+    // Fetch feedback config
+    fetch(`/api/student/tests/${id}/feedback-config`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.feedbackTimer !== undefined) {
+          setSkipTimer(data.feedbackTimer);
+        }
+      })
+      .catch(err => console.error('Failed to fetch config', err));
+  }, [id]);
+
+  useEffect(() => {
     if (skipTimer > 0) {
       const timer = setTimeout(() => setSkipTimer(skipTimer - 1), 1000);
       return () => clearTimeout(timer);
@@ -88,7 +100,28 @@ export default function FeedbackPage() {
                   ★
                 </button>
               ))}
+              
+              {rating === 0 && (
+                <div style={{
+                  display: 'inline-block',
+                  animation: 'bounceRight 1s infinite',
+                  fontSize: '24px',
+                  marginLeft: '8px',
+                  color: '#fbbf24',
+                  alignSelf: 'center'
+                }}>
+                  👈
+                </div>
+              )}
             </div>
+            
+            <style>{`
+              @keyframes bounceRight {
+                0%, 100% { transform: translateX(0); }
+                50% { transform: translateX(-10px); }
+              }
+            `}</style>
+            
             <div style={{ color: '#94a3b8', fontSize: '14px', marginTop: '8px' }}>
               {rating > 0 ? `You selected ${rating} stars` : 'Select a rating'}
             </div>

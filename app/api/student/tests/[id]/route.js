@@ -43,22 +43,27 @@ export async function GET(req, { params }) {
     let serverTimeLeft = test.timerMinutes * 60; // in seconds
     let sessionSubmissionId = null;
     let initialTabSwitches = 0;
+    let draftAnswers = [];
 
-    if (test.strictTimer) {
+    if (test.strictTimer || test.saveAnswersMode === 'server') {
       let inProgressSubmission = await Submission.findOne({ testId: id, studentId: user.userId, status: 'in_progress' });
       
       if (inProgressSubmission) {
-        const timeElapsedSeconds = Math.floor((now.getTime() - new Date(inProgressSubmission.createdAt).getTime()) / 1000);
-        serverTimeLeft = (test.timerMinutes * 60) - timeElapsedSeconds;
+        if (test.strictTimer) {
+          const timeElapsedSeconds = Math.floor((now.getTime() - new Date(inProgressSubmission.createdAt).getTime()) / 1000);
+          serverTimeLeft = (test.timerMinutes * 60) - timeElapsedSeconds;
+
+          if (serverTimeLeft <= 0) {
+            // Auto submit them if time has passed
+            inProgressSubmission.status = 'submitted';
+            await inProgressSubmission.save();
+            return NextResponse.json({ error: 'Time limit exceeded. Your test has been auto-submitted.' }, { status: 403 });
+          }
+        }
+        
         sessionSubmissionId = inProgressSubmission._id;
         initialTabSwitches = inProgressSubmission.tabSwitches || 0;
-
-        if (serverTimeLeft <= 0) {
-          // Auto submit them if time has passed
-          inProgressSubmission.status = 'submitted';
-          await inProgressSubmission.save();
-          return NextResponse.json({ error: 'Time limit exceeded. Your test has been auto-submitted.' }, { status: 403 });
-        }
+        draftAnswers = inProgressSubmission.answers || [];
       } else {
         // Create new session
         const newSession = await Submission.create({
@@ -89,6 +94,7 @@ export async function GET(req, { params }) {
     sanitizedTest.serverTimeLeft = serverTimeLeft;
     sanitizedTest.sessionSubmissionId = sessionSubmissionId;
     sanitizedTest.initialTabSwitches = initialTabSwitches;
+    sanitizedTest.draftAnswers = draftAnswers;
 
     return NextResponse.json(sanitizedTest);
   } catch (error) {

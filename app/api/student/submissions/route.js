@@ -25,18 +25,26 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Test not found' }, { status: 404 });
     }
 
-    // Check if submission already exists to prevent double submission
+    // Check if submission already exists to prevent double submission error on retries
     if (!test.allowMultipleSubmissions) {
-      const existingSubmission = await Submission.findOne({ testId, studentId: user.userId });
+      const existingSubmission = await Submission.findOne({ 
+        testId, 
+        studentId: user.userId,
+        status: { $in: ['submitted', 'graded'] }
+      });
       if (existingSubmission) {
-        return NextResponse.json({ error: 'You have already submitted this exam.' }, { status: 400 });
+        return NextResponse.json({ message: 'Submission already recorded', submission: existingSubmission });
       }
     }
 
     // Evaluate answers
     let totalScore = 0;
-    const maxScore = 100;
-    const scorePerQuestion = test.questions.length > 0 ? maxScore / test.questions.length : 0;
+    let maxScore = 0;
+    let correctAnswers = 0;
+
+    for (const question of test.questions) {
+      maxScore += (question.marks ?? 1);
+    }
 
     for (const answer of answers) {
       const question = test.questions.id(answer.questionId);
@@ -49,7 +57,7 @@ export async function POST(req) {
       if (question.type === 'programming') {
         const testCases = question.testCases || [];
         if (testCases.length === 0) {
-          totalScore += scorePerQuestion; // Give full marks if no test cases defined
+          totalScore += question.marks ?? 1; // Give full marks if no test cases defined
           continue;
         }
 
@@ -65,8 +73,10 @@ export async function POST(req) {
         });
         
         await Promise.all(execPromises);
+        
+        if (passedTestCases === testCases.length) correctAnswers++;
 
-        const questionScore = (passedTestCases / testCases.length) * scorePerQuestion;
+        const questionScore = (passedTestCases / testCases.length) * (question.marks ?? 1);
         
         const baseCodeStr = question.baseCode?.get(answer.language) || '';
         const isAttempted = answer.code && answer.code.trim() !== baseCodeStr.trim() && answer.code.trim() !== '';
@@ -79,7 +89,8 @@ export async function POST(req) {
       } else if (question.type === 'quiz') {
         if (answer.selectedOptionIndex !== undefined && answer.selectedOptionIndex !== null) {
           if (answer.selectedOptionIndex === question.correctOptionIndex) {
-            totalScore += scorePerQuestion;
+            totalScore += question.marks ?? 1;
+            correctAnswers++;
           } else {
             totalScore -= negativeMark;
           }
@@ -88,7 +99,8 @@ export async function POST(req) {
         if (answer.textResponse && answer.textResponse.trim() !== '') {
           const isCorrect = question.blankAnswers.some(ans => ans.trim().toLowerCase() === answer.textResponse.trim().toLowerCase());
           if (isCorrect) {
-            totalScore += scorePerQuestion;
+            totalScore += question.marks ?? 1;
+            correctAnswers++;
           } else {
             totalScore -= negativeMark;
           }
@@ -106,7 +118,8 @@ export async function POST(req) {
           }
           if (attempted) {
             if (allCorrect) {
-              totalScore += scorePerQuestion;
+              totalScore += question.marks ?? 1;
+              correctAnswers++;
             } else {
               totalScore -= negativeMark;
             }
@@ -115,21 +128,42 @@ export async function POST(req) {
       }
     }
 
-    let submission = await Submission.findOne({ testId, studentId: user.userId, status: 'in_progress' });
-    
-    if (submission) {
-      submission.answers = answers;
-      submission.score = totalScore;
-      submission.tabSwitches = Math.max(submission.tabSwitches || 0, tabSwitches);
-      submission.timeTaken = timeTaken;
-      submission.status = 'graded';
-      await submission.save();
-    } else {
+    let submission = await Submission.findOneAndUpdate(
+      { testId, studentId: user.userId, status: 'in_progress' },
+      {
+        $set: {
+          answers,
+          score: totalScore,
+          maxScore,
+          correctAnswers,
+          timeTaken,
+          status: 'graded'
+        },
+        $max: { tabSwitches }
+      },
+      { new: true }
+    );
+
+    if (!submission) {
+      // Prevent race conditions where two rapid requests both bypass the initial check
+      if (!test.allowMultipleSubmissions) {
+        const doubleCheck = await Submission.findOne({ 
+          testId, 
+          studentId: user.userId,
+          status: { $in: ['submitted', 'graded'] }
+        });
+        if (doubleCheck) {
+          return NextResponse.json({ message: 'Submission already recorded', submission: doubleCheck });
+        }
+      }
+
       submission = await Submission.create({
         testId,
         studentId: user.userId,
         answers,
         score: totalScore,
+        maxScore,
+        correctAnswers,
         tabSwitches,
         timeTaken,
         status: 'graded',

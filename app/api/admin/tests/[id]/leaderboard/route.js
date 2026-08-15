@@ -69,6 +69,8 @@ export async function GET(req, { params }) {
           studentName: sub.studentId?.name || 'Unknown',
           studentUsername: sub.studentId?.username || 'N/A',
           score: sub.score,
+          maxScore: sub.maxScore,
+          correctAnswers: sub.correctAnswers,
           timeTaken: sub.timeTaken || 0,
           tabSwitches: sub.tabSwitches || 0,
           createdAt: sub.createdAt,

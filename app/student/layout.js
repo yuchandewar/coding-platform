@@ -8,6 +8,14 @@ export default function StudentLayout({ children }) {
   const router = useRouter();
 
   const handleLogout = async () => {
+    // Clear all local exam caches on logout
+    if (typeof window !== 'undefined') {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('exam_cache_')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/');
   };

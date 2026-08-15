@@ -47,6 +47,12 @@ const SubmissionSchema = new mongoose.Schema({
   score: {
     type: Number, // Percentage 0-100 or actual score
   },
+  maxScore: {
+    type: Number,
+  },
+  correctAnswers: {
+    type: Number,
+  },
   tabSwitches: {
     type: Number,
     default: 0,

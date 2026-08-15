@@ -25,7 +25,10 @@ export default function TestDetails() {
   const [testAllowMultipleSubmissions, setTestAllowMultipleSubmissions] = useState(false);
   const [testStrictTimer, setTestStrictTimer] = useState(false);
   const [testMobileAccess, setTestMobileAccess] = useState(false);
+  const [testSaveAnswersMode, setTestSaveAnswersMode] = useState('local');
   const [testForgiveTabSwitches, setTestForgiveTabSwitches] = useState(0);
+  const [testFeedbackTimer, setTestFeedbackTimer] = useState(30);
+  const [testResultMetrics, setTestResultMetrics] = useState(['marks', 'percentage', 'correct_answers']);
   const [testShuffleQuestions, setTestShuffleQuestions] = useState(false);
   const [testIssueCertificate, setTestIssueCertificate] = useState(false);
   const [testOrganizationName, setTestOrganizationName] = useState('Coding Exam Platform');
@@ -35,7 +38,9 @@ export default function TestDetails() {
   
   // Generic question state
   const [questionType, setQuestionType] = useState('programming');
+  const [questionCategory, setQuestionCategory] = useState('');
   const [questionText, setQuestionText] = useState('');
+  const [questionMarks, setQuestionMarks] = useState(1);
   const [questionNegativeMarks, setQuestionNegativeMarks] = useState('');
 
   // AI Question Generator state
@@ -156,7 +161,10 @@ export default function TestDetails() {
       setTestAllowMultipleSubmissions(data.allowMultipleSubmissions || false);
       setTestStrictTimer(data.strictTimer || false);
       setTestMobileAccess(data.mobileAccess || false);
+      setTestSaveAnswersMode(data.saveAnswersMode || 'local');
       setTestForgiveTabSwitches(data.forgiveTabSwitches || 0);
+      setTestFeedbackTimer(data.feedbackTimer ?? 30);
+      setTestResultMetrics(data.resultMetrics || ['marks', 'percentage', 'correct_answers']);
       setTestShuffleQuestions(data.shuffleQuestions || false);
       setTestIssueCertificate(data.issueCertificate || false);
       setTestOrganizationName(data.organizationName || 'Coding Exam Platform');
@@ -188,7 +196,10 @@ export default function TestDetails() {
           allowMultipleSubmissions: testAllowMultipleSubmissions,
           strictTimer: testStrictTimer,
           mobileAccess: testMobileAccess,
+          saveAnswersMode: testSaveAnswersMode,
           forgiveTabSwitches: testForgiveTabSwitches,
+          feedbackTimer: testFeedbackTimer,
+          resultMetrics: testResultMetrics,
           shuffleQuestions: testShuffleQuestions,
           issueCertificate: testIssueCertificate,
           organizationName: testOrganizationName,
@@ -281,7 +292,9 @@ export default function TestDetails() {
   const handleEditClick = (q) => {
     setEditingQuestionId(q._id);
     setQuestionType(q.type);
+    setQuestionCategory(q.category || '');
     setQuestionText(q.questionText || '');
+    setQuestionMarks(q.marks ?? 1);
     setQuestionNegativeMarks(q.negativeMarks !== undefined && q.negativeMarks !== null ? q.negativeMarks.toString() : '');
     
     if (q.type === 'programming') {
@@ -306,7 +319,9 @@ export default function TestDetails() {
 
   const cancelEdit = () => {
     setEditingQuestionId(null);
+    setQuestionCategory('');
     setQuestionText('');
+    setQuestionMarks(1);
     setQuestionNegativeMarks('');
     setTestCases([{ input: '', expectedOutput: '', isHidden: false }]);
     setBaseCode({...defaultBaseCode});
@@ -362,7 +377,9 @@ export default function TestDetails() {
     try {
       let updatedQuestion = {
         type: questionType,
+        category: questionCategory.trim(),
         questionText,
+        marks: questionMarks,
       };
       
       if (questionNegativeMarks.trim() !== '') {
@@ -503,7 +520,40 @@ export default function TestDetails() {
                 <div style={{ fontSize: '12px', color: '#94a3b8' }}>If disabled, students will be blocked from taking this exam on mobile devices.</div>
               </div>
             </div>
+            <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Save Answers Strategy</label>
+                <select className="input-field" value={testSaveAnswersMode} onChange={(e) => setTestSaveAnswersMode(e.target.value)}>
+                  <option value="local">Local Cache (Browser localStorage)</option>
+                  <option value="server">Server-side Auto-save</option>
+                </select>
+                <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Server-side saves drafts continuously to prevent data loss on device failure.</div>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Feedback Skip Timer (Seconds)</label>
+                <input type="number" min="0" className="input-field" value={testFeedbackTimer === '' ? '' : testFeedbackTimer} onChange={(e) => setTestFeedbackTimer(e.target.value === '' ? '' : parseInt(e.target.value))} required />
+              </div>
+            </div>
             
+            <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Result Metrics Shown to Students</label>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                {['marks', 'percentage', 'correct_answers', 'percentile'].map(metric => (
+                  <label key={metric} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#f8fafc', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={testResultMetrics.includes(metric)}
+                      onChange={(e) => {
+                        if (e.target.checked) setTestResultMetrics([...testResultMetrics, metric]);
+                        else setTestResultMetrics(testResultMetrics.filter(m => m !== metric));
+                      }}
+                    />
+                    {metric.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
               <label htmlFor="forgiveTabSwitches" style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#f8fafc', fontWeight: 'bold' }}>
                 Tab Switch Forgiveness (Count)
@@ -587,6 +637,9 @@ export default function TestDetails() {
                     Negative Marks: {q.negativeMarks}
                   </div>
                 )}
+                <div style={{ marginTop: '4px', fontSize: '12px', color: '#10b981' }}>
+                  Marks: {q.marks ?? 1}
+                </div>
                 {q.type === 'programming' && (
                   <div style={{ marginTop: '12px', fontSize: '12px', color: '#94a3b8' }}>
                     {q.testCases?.length || 0} Test Cases ({q.testCases?.filter(t => t.isHidden).length || 0} Hidden)
@@ -697,6 +750,16 @@ export default function TestDetails() {
 
           <form onSubmit={handleAddQuestion} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Category / Section (Optional)</label>
+              <input 
+                type="text"
+                className="input-field" 
+                value={questionCategory} 
+                onChange={e => setQuestionCategory(e.target.value)} 
+                placeholder="e.g. Aptitude, Technical, General"
+              />
+            </div>
+            <div>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Question Text</label>
               <textarea 
                 className="input-field" 
@@ -706,6 +769,10 @@ export default function TestDetails() {
                 style={{ minHeight: '80px', resize: 'vertical' }}
                 placeholder={questionType === 'programming' ? "Write a function that..." : "What is the capital of..."}
               ></textarea>
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Marks (Points)</label>
+              <input type="number" step="0.5" min="0" className="input-field" value={questionMarks} onChange={(e) => setQuestionMarks(e.target.value === '' ? '' : Number(e.target.value))} required />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Negative Mark Override (Optional)</label>

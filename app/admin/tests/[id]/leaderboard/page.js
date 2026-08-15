@@ -58,7 +58,7 @@ export default function LeaderboardPage() {
   const handleDownloadCSV = () => {
     if (!data || !data.leaderboard || data.leaderboard.length === 0) return;
     
-    const headers = ['Rank', 'Student Name', 'Username', 'Score', 'Time Taken', 'Tab Switches', 'Rating', 'Feedback', 'Submitted On'];
+    const headers = ['Rank', 'Student Name', 'Username', 'Marks', 'Percentage', 'Correct Answers', 'Time Taken', 'Tab Switches', 'Rating', 'Feedback', 'Submitted On'];
     const csvRows = [headers.join(',')];
     
     data.leaderboard.forEach(sub => {
@@ -66,7 +66,9 @@ export default function LeaderboardPage() {
         sub.rank,
         `"${sub.studentName || ''}"`,
         `"${sub.studentUsername || ''}"`,
-        sub.score?.toFixed(2) || 0,
+        `"${sub.score?.toFixed(2) || 0} / ${sub.maxScore || '?'}"`,
+        `${sub.maxScore ? ((sub.score / sub.maxScore) * 100).toFixed(2) : (sub.score !== undefined ? sub.score.toFixed(2) : 0)}%`,
+        sub.correctAnswers || 0,
         formatTime(sub.timeTaken),
         sub.tabSwitches || 0,
         sub.rating || 'N/A',
@@ -117,7 +119,9 @@ export default function LeaderboardPage() {
                   <tr style={{ borderBottom: '1px solid var(--card-border)', textAlign: 'left' }}>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: 'bold' }}>Rank</th>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Student</th>
-                    <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Score</th>
+                    <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Marks</th>
+                    <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Percentage</th>
+                    <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Correct Answers</th>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Time Taken</th>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Tab Switches</th>
                     <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Rating</th>
@@ -143,8 +147,14 @@ export default function LeaderboardPage() {
                         </div>
                         <div style={{ fontSize: '12px', color: '#94a3b8' }}>ID: {sub.studentUsername}</div>
                       </td>
-                      <td style={{ padding: '12px 8px', fontWeight: 'bold', color: sub.score >= 50 ? 'var(--success-color)' : 'var(--danger-color)' }}>
-                        {sub.score?.toFixed(2)}
+                      <td style={{ padding: '12px 8px', fontWeight: 'bold', color: 'var(--success-color)' }}>
+                        {sub.score?.toFixed(2) || 0} / {sub.maxScore || '?'}
+                      </td>
+                      <td style={{ padding: '12px 8px', fontWeight: 'bold', color: sub.score >= (sub.maxScore ? sub.maxScore / 2 : 50) ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                        {sub.maxScore ? ((sub.score / sub.maxScore) * 100).toFixed(2) : (sub.score !== undefined ? sub.score.toFixed(2) : 0)}%
+                      </td>
+                      <td style={{ padding: '12px 8px', color: '#cbd5e1' }}>
+                        {sub.correctAnswers || 0}
                       </td>
                       <td style={{ padding: '12px 8px', color: '#cbd5e1' }}>
                         {formatTime(sub.timeTaken)}

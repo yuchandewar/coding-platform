@@ -38,6 +38,8 @@ export default function ExamPage() {
   const [tabSwitches, setTabSwitches] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const sessionSubmissionIdRef = useRef(null);
+  const lastSavedAnswersRef = useRef({});
+  const saveTimeoutRef = useRef(null);
 
   const syncWarning = async (newCount) => {
     if (sessionSubmissionIdRef.current) {
@@ -184,7 +186,11 @@ export default function ExamPage() {
       
       // Mobile Blocker Check
       if (data.mobileAccess === false) {
-        const isMobile = window.innerWidth <= 768 || /Mobi|Android|iPhone/i.test(navigator.userAgent);
+        const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const isTouchScreen = 'ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+        const screenWidth = window.screen.width;
+        const isMobile = isMobileUA || window.innerWidth <= 768 || (isTouchScreen && screenWidth <= 1024);
+        
         if (isMobile) {
           setIsMobileBlocked(true);
           setLoading(false);
@@ -212,29 +218,64 @@ export default function ExamPage() {
       // Initialize answers and statuses
       const initialAnswers = {};
       const initialStatuses = {};
+      
+      const isLocalMode = data.saveAnswersMode === 'local' || !data.saveAnswersMode;
+      let localCache = null;
+      if (isLocalMode) {
+        try {
+          const cacheStr = localStorage.getItem(`exam_cache_${id}`);
+          if (cacheStr) localCache = JSON.parse(cacheStr);
+        } catch (err) {}
+      }
+
       data.questions.forEach((q, idx) => {
+        let draftAns = null;
+        let hasDraftData = false;
+
+        if (isLocalMode && localCache && localCache[q._id]) {
+          const ca = localCache[q._id];
+          draftAns = {
+            code: ca.code,
+            language: ca.language,
+            selectedOptionIndex: ca.selectedOptionIndex,
+            textResponse: ca.textResponse,
+            pairedResponses: ca.pairedResponses
+          };
+        } else if (!isLocalMode) {
+          draftAns = data.draftAnswers?.find(da => da.questionId === q._id);
+        }
+
         initialStatuses[q._id] = 'not_visited';
         if (q.type === 'programming') {
           initialAnswers[q._id] = {
-            code: q.baseCode?.['javascript'] || '// Write your code here\n',
-            language: 'javascript',
+            code: draftAns?.code || q.baseCode?.['javascript'] || '// Write your code here\n',
+            language: draftAns?.language || 'javascript',
             baseCodeOriginal: q.baseCode?.['javascript'] || '// Write your code here\n'
           };
+          if (draftAns?.code) hasDraftData = true;
         } else if (q.type === 'quiz') {
           initialAnswers[q._id] = {
-            selectedOptionIndex: null
+            selectedOptionIndex: draftAns?.selectedOptionIndex !== undefined ? draftAns.selectedOptionIndex : null
           };
+          if (draftAns?.selectedOptionIndex !== undefined && draftAns?.selectedOptionIndex !== null) hasDraftData = true;
         } else if (q.type === 'fill_in_the_blank') {
           initialAnswers[q._id] = {
-            textResponse: ''
+            textResponse: draftAns?.textResponse || ''
           };
+          if (draftAns?.textResponse) hasDraftData = true;
         } else if (q.type === 'pairing') {
           initialAnswers[q._id] = {
-            pairedResponses: q.pairs ? q.pairs.map(p => ({ left: p.left, right: '' })) : []
+            pairedResponses: draftAns?.pairedResponses || (q.pairs ? q.pairs.map(p => ({ left: p.left, right: '' })) : [])
           };
+          if (draftAns?.pairedResponses && draftAns.pairedResponses.some(pr => pr.right.trim() !== '')) hasDraftData = true;
+        }
+        
+        if (hasDraftData) {
+          initialStatuses[q._id] = 'answered';
         }
       });
       setAnswers(initialAnswers);
+      lastSavedAnswersRef.current = JSON.parse(JSON.stringify(initialAnswers));
       setQuestionStatuses(initialStatuses);
     } catch (err) {
       console.error(err);
@@ -250,6 +291,50 @@ export default function ExamPage() {
     const s = seconds % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
+
+  useEffect(() => {
+    if (!test || !sessionSubmissionIdRef.current) return;
+
+    const currentAnswersString = JSON.stringify(answers);
+    const lastAnswersString = JSON.stringify(lastSavedAnswersRef.current);
+    
+    if (currentAnswersString !== lastAnswersString && Object.keys(lastSavedAnswersRef.current).length > 0) {
+      if (test.saveAnswersMode === 'server') {
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        
+        saveTimeoutRef.current = setTimeout(async () => {
+          try {
+            const finalAnswersArray = Object.keys(answers).map(qId => {
+              const q = test.questions.find(x => x._id === qId);
+              const ans = answers[qId];
+              if (q.type === 'programming') {
+                return { questionId: qId, type: 'programming', code: ans.code, language: ans.language };
+              } else if (q.type === 'quiz') {
+                return { questionId: qId, type: 'quiz', selectedOptionIndex: ans.selectedOptionIndex };
+              } else if (q.type === 'fill_in_the_blank') {
+                return { questionId: qId, type: 'fill_in_the_blank', textResponse: ans.textResponse };
+              } else if (q.type === 'pairing') {
+                return { questionId: qId, type: 'pairing', pairedResponses: ans.pairedResponses };
+              }
+            }).filter(Boolean);
+
+            await fetch(`/api/student/tests/${id}/draft`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ answers: finalAnswersArray })
+            });
+            lastSavedAnswersRef.current = JSON.parse(currentAnswersString);
+          } catch (err) {
+            console.error('Failed to auto-save draft', err);
+          }
+        }, 2000); // Debounce 2 seconds
+      } else {
+        // Local Cache Mode
+        localStorage.setItem(`exam_cache_${id}`, currentAnswersString);
+        lastSavedAnswersRef.current = JSON.parse(currentAnswersString);
+      }
+    }
+  }, [answers, test, id]);
 
   const currentQuestion = test?.questions?.[currentQuestionIndex];
   const currentAnswer = answers[currentQuestion?._id] || {};
@@ -418,6 +503,11 @@ export default function ExamPage() {
       });
       
       if (res.ok) {
+        // Clear local cache if using local mode
+        if (!test.saveAnswersMode || test.saveAnswersMode === 'local') {
+          localStorage.removeItem(`exam_cache_${id}`);
+        }
+        
         if (autoSubmit) {
           setNotification({ type: 'success', message: 'Time is up! Exam auto-submitted.' });
           setTimeout(() => router.push(`/student/exam/${id}/feedback`), 2000);
@@ -468,6 +558,14 @@ export default function ExamPage() {
     </div>
   );
   if (!test) return <div style={{ padding: '40px', textAlign: 'center' }}>Test not found.</div>;
+
+  // Group questions by category
+  const groupedQuestions = {};
+  test.questions.forEach((q, idx) => {
+    const cat = q.category || 'General';
+    if (!groupedQuestions[cat]) groupedQuestions[cat] = [];
+    groupedQuestions[cat].push({ q, idx });
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0f172a', position: 'relative', userSelect: 'none', WebkitUserSelect: 'none' }}>
@@ -589,6 +687,9 @@ export default function ExamPage() {
           {/* Question Title Bar */}
           <div style={{ padding: '12px 24px', background: 'rgba(15, 23, 42, 0.8)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
             <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '16px' }}>Question {currentQuestionIndex + 1}</h3>
+            <div style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              {currentQuestion?.marks ?? 1} Marks
+            </div>
             {currentNegativeMark > 0 && (
               <div style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
                 -{currentNegativeMark} Negative Marks
@@ -849,33 +950,40 @@ export default function ExamPage() {
           {/* Question Grid */}
           <div style={{ flex: 1, padding: '16px', overflowY: 'auto' }}>
             <h4 style={{ margin: '0 0 12px 0', color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Question Palette</h4>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {test.questions.map((q, idx) => {
-                const status = questionStatuses[q._id] || 'not_visited';
-                const isActive = currentQuestionIndex === idx;
-                return (
-                  <button
-                    key={q._id}
-                    onClick={() => { setCurrentQuestionIndex(idx); setTestResults(null); }}
-                    style={{
-                      width: '40px', height: '40px',
-                      background: getStatusColor(status),
-                      border: isActive ? '2px solid white' : 'none',
-                      color: 'white',
-                      fontWeight: 'bold',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      position: 'relative'
-                    }}
-                  >
-                    {idx + 1}
-                    {status === 'answered_marked' && (
-                      <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '8px', height: '8px', background: '#10b981', borderRadius: '4px', border: '1px solid white' }}></div>
-                    )}
-                  </button>
-                );
-              })}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {Object.entries(groupedQuestions).map(([category, qs]) => (
+                <div key={category}>
+                  <div style={{ fontSize: '13px', color: '#cbd5e1', marginBottom: '8px', fontWeight: 'bold' }}>{category}</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {qs.map(({ q, idx }) => {
+                      const status = questionStatuses[q._id] || 'not_visited';
+                      const isActive = currentQuestionIndex === idx;
+                      return (
+                        <button
+                          key={q._id}
+                          onClick={() => { setCurrentQuestionIndex(idx); setTestResults(null); }}
+                          style={{
+                            width: '40px', height: '40px',
+                            background: getStatusColor(status),
+                            border: isActive ? '2px solid white' : 'none',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            position: 'relative'
+                          }}
+                        >
+                          {idx + 1}
+                          {status === 'answered_marked' && (
+                            <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '8px', height: '8px', background: '#10b981', borderRadius: '4px', border: '1px solid white' }}></div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

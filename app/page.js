@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 
@@ -10,6 +10,17 @@ export default function StudentLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    // Clear all local exam caches if user ends up on login page (e.g. session timeout)
+    if (typeof window !== 'undefined') {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('exam_cache_')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
