@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import styles from '../admin.module.css';
 
 export default function ManageUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -13,19 +16,46 @@ export default function ManageUsers() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const observer = useRef();
+  
+  const lastElementRef = useCallback(node => {
+    if (loading || loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prev => prev + 1);
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [loading, loadingMore, hasMore]);
 
-  const fetchUsers = async () => {
+  useEffect(() => {
+    fetchUsers(page);
+  }, [page]);
+
+  const fetchUsers = async (pageNum) => {
+    if (pageNum === 1) setLoading(true);
+    else setLoadingMore(true);
+
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await fetch(`/api/admin/users?page=${pageNum}&limit=20`);
       const data = await res.json();
-      setUsers(data);
+      
+      if (data.users) {
+        setUsers(prev => pageNum === 1 ? data.users : [...prev, ...data.users]);
+        setHasMore(data.hasMore);
+      } else {
+        // Fallback if API hasn't been fully updated yet during hot-reload
+        setUsers(data);
+        setHasMore(false);
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -48,7 +78,8 @@ export default function ManageUsers() {
       setName('');
       setUsername('');
       setPassword('');
-      fetchUsers();
+      setPage(1); // Reset to first page
+      fetchUsers(1);
     } catch (err) {
       setError(err.message);
     }
@@ -85,7 +116,7 @@ export default function ManageUsers() {
 
         <div className="glass-panel" style={{ padding: '24px' }}>
           <h3>Student List</h3>
-          {loading ? <p style={{ marginTop: '20px' }}>Loading...</p> : (
+          {loading && page === 1 ? <p style={{ marginTop: '20px' }}>Loading...</p> : (
             <div style={{ marginTop: '20px', maxHeight: '70vh', overflowY: 'auto', paddingRight: '8px' }}>
               {users.length === 0 ? <p style={{ color: '#94a3b8' }}>No students found.</p> : (
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -94,18 +125,46 @@ export default function ManageUsers() {
                       <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Name</th>
                       <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Student ID</th>
                       <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500' }}>Created At</th>
+                      <th style={{ padding: '12px 8px', color: '#94a3b8', fontWeight: '500', textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map(user => (
-                      <tr key={user._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                        <td style={{ padding: '12px 8px' }}>{user.name}</td>
-                        <td style={{ padding: '12px 8px' }}>{user.username}</td>
-                        <td style={{ padding: '12px 8px', color: '#94a3b8' }}>{new Date(user.createdAt).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
+                    {users.map((user, index) => {
+                      const isLastElement = index === users.length - 1;
+                      return (
+                        <tr 
+                          key={user._id} 
+                          ref={isLastElement ? lastElementRef : null}
+                          style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                        >
+                          <td style={{ padding: '12px 8px' }}>{user.name}</td>
+                          <td style={{ padding: '12px 8px' }}>{user.username}</td>
+                          <td style={{ padding: '12px 8px', color: '#94a3b8' }}>{new Date(user.createdAt).toLocaleDateString()}</td>
+                          <td style={{ padding: '12px 8px', textAlign: 'right' }}>
+                            <button 
+                              onClick={() => window.location.href = `/admin/users/${user._id}/performance`}
+                              className="btn-primary" 
+                              style={{ padding: '4px 8px', fontSize: '12px', background: 'var(--primary-color)' }}
+                            >
+                              Performance
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
+              )}
+              
+              {loadingMore && (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>
+                  Loading more students...
+                </div>
+              )}
+              {!hasMore && users.length > 0 && (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '14px' }}>
+                  End of student list
+                </div>
               )}
             </div>
           )}

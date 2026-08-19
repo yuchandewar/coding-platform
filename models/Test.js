@@ -127,6 +127,10 @@ const TestSchema = new mongoose.Schema({
     type: [String],
     default: ['marks', 'percentage', 'correct_answers'], // 'percentile' omitted by default to preserve classic behavior
   },
+  showPerformanceTrack: {
+    type: Boolean,
+    default: false,
+  },
   eventName: {
     type: String,
     default: 'Programming Assessment',

@@ -26,7 +26,8 @@ export async function GET(req) {
     return NextResponse.json({
       hasGeminiKey: !!adminUser.geminiApiKey,
       geminiApiKeyMasked: maskedKey,
-      geminiModel: adminUser.geminiModel || 'gemini-1.5-flash-latest'
+      geminiModel: adminUser.geminiModel || 'gemini-1.5-flash-latest',
+      questionCategories: adminUser.questionCategories || []
     });
   } catch (error) {
     console.error('Settings GET error:', error);
@@ -41,7 +42,7 @@ export async function PUT(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { geminiApiKey, geminiModel } = await req.json();
+    const { geminiApiKey, geminiModel, questionCategories } = await req.json();
 
     await dbConnect();
     
@@ -52,6 +53,9 @@ export async function PUT(req) {
     }
     if (geminiModel !== undefined) {
       updateData.geminiModel = geminiModel;
+    }
+    if (questionCategories !== undefined) {
+      updateData.questionCategories = questionCategories;
     }
     
     await User.findByIdAndUpdate(user.userId, updateData);

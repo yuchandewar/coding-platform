@@ -13,7 +13,7 @@ export async function GET() {
 
     await dbConnect();
     const submissions = await Submission.find({ studentId: user.userId })
-      .populate({ path: 'testId', select: 'title timerMinutes revealScores resultMetrics issueCertificate organizationName eventName certificateEligibility' })
+      .populate({ path: 'testId', select: 'title timerMinutes revealScores resultMetrics showPerformanceTrack issueCertificate organizationName eventName certificateEligibility' })
       .sort({ createdAt: -1 });
 
     const resultsWithEligibility = await Promise.all(submissions.map(async (sub) => {

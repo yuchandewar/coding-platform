@@ -29,12 +29,14 @@ export default function TestDetails() {
   const [testForgiveTabSwitches, setTestForgiveTabSwitches] = useState(0);
   const [testFeedbackTimer, setTestFeedbackTimer] = useState(30);
   const [testResultMetrics, setTestResultMetrics] = useState(['marks', 'percentage', 'correct_answers']);
+  const [testShowPerformanceTrack, setTestShowPerformanceTrack] = useState(false);
   const [testShuffleQuestions, setTestShuffleQuestions] = useState(false);
   const [testIssueCertificate, setTestIssueCertificate] = useState(false);
   const [testOrganizationName, setTestOrganizationName] = useState('Coding Exam Platform');
   const [testEventName, setTestEventName] = useState('Programming Assessment');
   const [isEditingConfig, setIsEditingConfig] = useState(false);
   const [configSaving, setConfigSaving] = useState(false);
+  const [globalCategories, setGlobalCategories] = useState([]);
   
   // Generic question state
   const [questionType, setQuestionType] = useState('programming');
@@ -52,10 +54,23 @@ export default function TestDetails() {
   // Load Test Data
   useEffect(() => {
     fetchTest();
+    fetchGlobalCategories();
     // Initialize default code blocks
     setBaseCode({...defaultBaseCode});
     setDriverCode({...defaultDriverCode});
   }, [id]);
+
+  const fetchGlobalCategories = async () => {
+    try {
+      const res = await fetch('/api/admin/settings');
+      if (res.ok) {
+        const data = await res.json();
+        setGlobalCategories(data.questionCategories || []);
+      }
+    } catch (err) {
+      console.error('Failed to load categories', err);
+    }
+  };
 
   const handleGenerateAIQuestions = async () => {
     if (!aiPrompt) return alert('Please enter a topic/prompt');
@@ -70,7 +85,8 @@ export default function TestDetails() {
           prompt: aiPrompt, 
           count: Number(aiCount), 
           type: aiType,
-          existingQuestions
+          existingQuestions,
+          availableCategories: globalCategories
         })
       });
       const data = await res.json();
@@ -137,12 +153,7 @@ export default function TestDetails() {
   
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchTest();
-    // Initialize default code blocks
-    setBaseCode({...defaultBaseCode});
-    setDriverCode({...defaultDriverCode});
-  }, [id]);
+
 
   const fetchTest = async () => {
     try {
@@ -165,6 +176,7 @@ export default function TestDetails() {
       setTestForgiveTabSwitches(data.forgiveTabSwitches || 0);
       setTestFeedbackTimer(data.feedbackTimer ?? 30);
       setTestResultMetrics(data.resultMetrics || ['marks', 'percentage', 'correct_answers']);
+      setTestShowPerformanceTrack(data.showPerformanceTrack || false);
       setTestShuffleQuestions(data.shuffleQuestions || false);
       setTestIssueCertificate(data.issueCertificate || false);
       setTestOrganizationName(data.organizationName || 'Coding Exam Platform');
@@ -200,6 +212,7 @@ export default function TestDetails() {
           forgiveTabSwitches: testForgiveTabSwitches,
           feedbackTimer: testFeedbackTimer,
           resultMetrics: testResultMetrics,
+          showPerformanceTrack: testShowPerformanceTrack,
           shuffleQuestions: testShuffleQuestions,
           issueCertificate: testIssueCertificate,
           organizationName: testOrganizationName,
@@ -576,6 +589,10 @@ export default function TestDetails() {
               <input type="checkbox" id="shuffleQuestions" checked={testShuffleQuestions} onChange={(e) => setTestShuffleQuestions(e.target.checked)} />
               <label htmlFor="shuffleQuestions" style={{ fontSize: '14px', color: '#cbd5e1' }}>Shuffle Questions for Students</label>
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input type="checkbox" id="showPerformanceTrack" checked={testShowPerformanceTrack} onChange={(e) => setTestShowPerformanceTrack(e.target.checked)} />
+              <label htmlFor="showPerformanceTrack" style={{ fontSize: '14px', color: '#cbd5e1' }}>Enable Performance Analysis Tracking</label>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', gridColumn: '1 / -1', marginTop: '12px' }}>
               <input type="checkbox" id="issueCertificate" checked={testIssueCertificate} onChange={(e) => setTestIssueCertificate(e.target.checked)} />
               <label htmlFor="issueCertificate" style={{ fontSize: '14px', color: '#cbd5e1', fontWeight: 'bold', color: 'var(--primary-color)' }}>Generate Certificate on Completion</label>
@@ -625,7 +642,10 @@ export default function TestDetails() {
             {test.questions?.map((q, idx) => (
               <div key={q._id || idx} style={{ padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>Q{idx + 1}. {q.type.toUpperCase()}</div>
+                  <div style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>
+                    Q{idx + 1}. {q.type.toUpperCase()}
+                    {q.category && <span style={{ marginLeft: '8px', fontSize: '12px', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '12px', color: '#cbd5e1' }}>{q.category}</span>}
+                  </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button onClick={() => handleEditClick(q)} className="btn-primary" style={{ padding: '4px 8px', fontSize: '12px' }}>Edit</button>
                     <button onClick={() => handleDeleteQuestion(q._id)} className="btn-primary" style={{ padding: '4px 8px', fontSize: '12px', background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.5)', color: 'var(--danger-color)' }}>Delete</button>
@@ -753,11 +773,17 @@ export default function TestDetails() {
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Category / Section (Optional)</label>
               <input 
                 type="text"
+                list="global-categories-list"
                 className="input-field" 
                 value={questionCategory} 
                 onChange={e => setQuestionCategory(e.target.value)} 
                 placeholder="e.g. Aptitude, Technical, General"
               />
+              <datalist id="global-categories-list">
+                {globalCategories.map(cat => (
+                  <option key={cat} value={cat} />
+                ))}
+              </datalist>
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#cbd5e1' }}>Question Text</label>

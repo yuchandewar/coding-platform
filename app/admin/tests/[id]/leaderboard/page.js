@@ -96,14 +96,23 @@ export default function LeaderboardPage() {
           <button onClick={() => router.push(`/admin/tests/${id}`)} className="btn-primary" style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.1)', color: 'white' }}>← Back to Test</button>
           <h1>Leaderboard: {data?.testTitle || 'Loading...'}</h1>
         </div>
-        <button 
-          onClick={handleDownloadCSV} 
-          disabled={!data || data.leaderboard.length === 0}
-          className="btn-primary"
-          style={{ padding: '8px 16px', background: 'var(--success-color)', display: 'flex', alignItems: 'center', gap: '8px' }}
-        >
-          <span>📥 Download CSV</span>
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            onClick={() => router.push(`/admin/tests/${id}/analytics`)} 
+            className="btn-primary"
+            style={{ padding: '8px 16px', background: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <span>📊 Performance Track</span>
+          </button>
+          <button 
+            onClick={handleDownloadCSV} 
+            disabled={!data || data.leaderboard.length === 0}
+            className="btn-primary"
+            style={{ padding: '8px 16px', background: 'var(--success-color)', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <span>📥 Download CSV</span>
+          </button>
+        </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '24px' }}>

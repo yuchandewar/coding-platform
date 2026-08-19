@@ -26,6 +26,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: 'gemini-1.5-flash-latest'
   },
+  questionCategories: {
+    type: [String],
+    default: []
+  }
 }, { timestamps: true });
 
 // Delete the cached model to force recompilation during Next.js Hot Reload

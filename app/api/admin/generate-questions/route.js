@@ -10,7 +10,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { prompt, count, type, existingQuestions = [] } = await req.json();
+    const { prompt, count, type, existingQuestions = [], availableCategories = [] } = await req.json();
 
     if (!prompt || !count || !type) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -24,6 +24,10 @@ export async function POST(req) {
     }
 
     const apiKey = adminUser.geminiApiKey;
+    
+    const categoryInstruction = availableCategories.length > 0 
+      ? `\n- "category": Select the most appropriate category from this exact list: [${availableCategories.join(', ')}]. If none perfectly fit, generate a short logical category string.`
+      : `\n- "category": A short string representing the category (e.g. "Arrays", "Database", "Logical Reasoning").`;
 
     let formatInstruction = '';
     if (type === 'quiz') {
@@ -31,25 +35,25 @@ export async function POST(req) {
 - "type": "quiz"
 - "questionText": The question string
 - "options": An array of exactly 4 strings representing the choices
-- "correctOptionIndex": A number between 0 and 3 representing the correct choice index.`;
+- "correctOptionIndex": A number between 0 and 3 representing the correct choice index.${categoryInstruction}`;
     } else if (type === 'fill_in_the_blank') {
       formatInstruction = `Return ONLY a valid JSON array of ${count} objects. Each object MUST have:
 - "type": "fill_in_the_blank"
 - "questionText": The question string with blanks denoted by underscores, e.g., "The capital of France is ___."
-- "blankAnswers": An array of strings containing the correct answer for each blank in order.`;
+- "blankAnswers": An array of strings containing the correct answer for each blank in order.${categoryInstruction}`;
     } else if (type === 'pairing') {
       formatInstruction = `Return ONLY a valid JSON array of ${count} objects. Each object MUST have:
 - "type": "pairing"
 - "questionText": The question instruction string, e.g., "Match the following items."
-- "pairs": An array of exactly 4 objects, each with a "left" string and a "right" string representing the correct matching pairs.`;
+- "pairs": An array of exactly 4 objects, each with a "left" string and a "right" string representing the correct matching pairs.${categoryInstruction}`;
     } else if (type === 'programming') {
       formatInstruction = `Return ONLY a valid JSON array of ${count} objects. Each object MUST have:
 - "type": "programming"
 - "questionText": The programming problem description.
 - "supportedLanguages": ["javascript", "python", "java", "cpp"]
-- "baseCode": A JSON object with keys "javascript", "python", "java", "cpp". The starter code MUST define a function with parameters perfectly matching the specific problem (e.g., \`function twoSum(nums, target)\` instead of a generic \`solve(input)\`).
-- "driverCode": A JSON object with keys "javascript", "python", "java", "cpp". This is the hidden code that runs the tests. It MUST read standard input, parse it into the exact data types expected by the function parameters, call the student's function, and print the result. Use "{{USER_CODE}}" as a placeholder for the student's code.
-- "testCases": An array of 3 objects, each with "input" (string, formatted so your driver code can parse it), "expectedOutput" (string), and "isHidden" (boolean).`;
+- "baseCode": A JSON object with keys "javascript", "python", "java", "cpp". The starter code MUST define a function with parameters perfectly matching the specific problem.
+- "driverCode": A JSON object with keys "javascript", "python", "java", "cpp". This is the hidden code that runs the tests. It MUST read standard input, parse it, call the student's function, and print the result. Use "{{USER_CODE}}" as a placeholder.
+- "testCases": An array of 3 objects, each with "input" (string), "expectedOutput" (string), and "isHidden" (boolean).${categoryInstruction}`;
     }
 
     let systemPrompt = `You are an expert educational content creator. The user needs ${count} question(s) about the topic: "${prompt}".

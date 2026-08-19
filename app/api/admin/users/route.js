@@ -3,11 +3,25 @@ import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(req) {
   try {
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const skip = (page - 1) * limit;
+
     await dbConnect();
-    const users = await User.find({ role: 'student' }).select('-password').sort({ createdAt: -1 });
-    return NextResponse.json(users);
+    
+    const users = await User.find({ role: 'student' })
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await User.countDocuments({ role: 'student' });
+    const hasMore = skip + users.length < total;
+
+    return NextResponse.json({ users, hasMore, total });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
