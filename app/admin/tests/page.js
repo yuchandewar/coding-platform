@@ -63,6 +63,7 @@ export default function ManageTests() {
           saveAnswersMode,
           feedbackTimer,
           resultMetrics,
+          showPerformanceTrack: false,
           questions: [] 
         })
       });

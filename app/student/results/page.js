@@ -110,6 +110,18 @@ export default function StudentResults() {
                         </Link>
                       </div>
                     )}
+                    {sub.testId?.showPerformanceTrack && (
+                      <div style={{ marginTop: '12px' }}>
+                        <Link href={`/student/performance/${sub._id}`} style={{ textDecoration: 'none' }}>
+                          <button 
+                            className="btn-primary" 
+                            style={{ width: '100%', padding: '10px', background: 'var(--primary-color)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                          >
+                            📊 View Performance Analysis
+                          </button>
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

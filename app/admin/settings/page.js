@@ -8,6 +8,8 @@ export default function AdminSettings() {
   const [maskedKey, setMaskedKey] = useState('');
   const [hasKey, setHasKey] = useState(false);
   const [geminiModel, setGeminiModel] = useState('gemini-1.5-flash-latest');
+  const [questionCategories, setQuestionCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -23,6 +25,7 @@ export default function AdminSettings() {
         setHasKey(data.hasGeminiKey);
         setMaskedKey(data.geminiApiKeyMasked);
         if (data.geminiModel) setGeminiModel(data.geminiModel);
+        if (data.questionCategories) setQuestionCategories(data.questionCategories);
       }
     } catch (error) {
       console.error('Failed to fetch settings', error);
@@ -36,7 +39,7 @@ export default function AdminSettings() {
     setSaving(true);
     
     try {
-      const payload = { geminiModel };
+      const payload = { geminiModel, questionCategories };
       if (apiKey) payload.geminiApiKey = apiKey;
 
       const res = await fetch('/api/admin/settings', {
@@ -113,6 +116,52 @@ export default function AdminSettings() {
               />
               <div style={{ fontSize: '12px', color: '#94a3b8' }}>
                 Type the exact model name supported by your API key (e.g., gemini-2.5-flash, gemini-2.5-pro).
+              </div>
+            </div>
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                Global Question Categories
+              </label>
+              <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>
+                Add standard categories (e.g. Aptitude, Technical) to provide consistent suggestions when creating test questions.
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="New Category..."
+                  value={newCategory}
+                  onChange={e => setNewCategory(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newCategory.trim() && !questionCategories.includes(newCategory.trim())) {
+                      setQuestionCategories([...questionCategories, newCategory.trim()]);
+                      setNewCategory('');
+                    }
+                  }}
+                  className="btn-primary"
+                  style={{ background: '#3b82f6', padding: '8px 16px' }}
+                >
+                  Add
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {questionCategories.map(cat => (
+                  <span key={cat} style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(255,255,255,0.1)', padding: '4px 12px', borderRadius: '16px', fontSize: '13px' }}>
+                    {cat}
+                    <button
+                      type="button"
+                      onClick={() => setQuestionCategories(questionCategories.filter(c => c !== cat))}
+                      style={{ background: 'none', border: 'none', color: '#ef4444', marginLeft: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+                {questionCategories.length === 0 && <span style={{ color: '#64748b', fontSize: '13px' }}>No categories added.</span>}
               </div>
             </div>
             

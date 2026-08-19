@@ -42,6 +42,9 @@ export default function StudentLayout({ children }) {
           <Link href="/student/results" className={`${styles.navItem} ${pathname === '/student/results' ? styles.active : ''}`}>
             Results
           </Link>
+          <Link href="/student/performance" className={`${styles.navItem} ${pathname === '/student/performance' ? styles.active : ''}`}>
+            Performance
+          </Link>
         </nav>
         <button onClick={handleLogout} className={styles.logoutBtn}>
           Logout
